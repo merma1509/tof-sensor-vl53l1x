@@ -19,4 +19,9 @@ void VL53L1X_GetClocks(void);
 void VL53L1X_SpiEnable(void);
 void VL53L1X_SpiDisable(void);
 
+/* I2C function declarations for compatibility */
+uint8_t i2c_write_register(uint16_t reg, uint8_t data);
+uint8_t i2c_read_register(uint16_t reg);
+void i2c_init(void);
+
 #endif /* VL53L1_PLATFORM_GD32_H */

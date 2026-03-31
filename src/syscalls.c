@@ -3,6 +3,12 @@
  * @brief System calls for embedded systems
  */
 
+#include <stdint.h>
+#include <errno.h>
+
+#undef errno
+int errno;
+
 /* _exit implementation */
 void _exit(int status) {
     while (1) {
@@ -10,53 +16,70 @@ void _exit(int status) {
     }
 }
 
-/* write implementation */
-int _write(int file, const void *ptr, int len) {
-    // Stub implementation
+/* _write implementation */
+int _write(int file, char *ptr, int len) {
+    // Simple implementation for UART output
+    int todo;
+    (void)file; // Suppress unused parameter warning
+    
+    for (todo = 0; todo < len; todo++) {
+        // Wait for transmit buffer empty
+        while (!(*(volatile uint32_t*)0x40011008 & (1 << 7))); // USART_STAT_TBE
+        *(volatile uint32_t*)0x4001100C = *ptr++; // USART_DATA
+    }
+    
     return len;
 }
 
-/* read implementation */
-int _read(int file, void *ptr, int len) {
-    // Stub implementation
+/* _read implementation */
+int _read(int file, char *ptr, int len) {
+    (void)file; // Suppress unused parameter warning
+    (void)ptr;  // Suppress unused parameter warning
+    (void)len;  // Suppress unused parameter warning
     return 0;
 }
 
-/* fstat implementation */
-int _fstat(int file, void *st) {
-    // Stub implementation
-    return 0;
+/* _sbrk implementation */
+void *_sbrk(int incr) {
+    errno = ENOMEM;
+    return (void *)-1;
 }
 
-/* isatty implementation */
+/* _close implementation */
+int _close(int file) {
+    (void)file; // Suppress unused parameter warning
+    return -1;
+}
+
+/* _isatty implementation */
 int _isatty(int file) {
-    // Stub implementation
+    (void)file; // Suppress unused parameter warning
     return 1;
 }
 
-/* lseek implementation */
+/* _fstat implementation */
+int _fstat(int file, void *st) {
+    (void)file; // Suppress unused parameter warning
+    (void)st;  // Suppress unused parameter warning
+    return 0;
+}
+
+/* _lseek implementation */
 int _lseek(int file, int ptr, int dir) {
-    // Stub implementation
+    (void)file; // Suppress unused parameter warning
+    (void)ptr;  // Suppress unused parameter warning
+    (void)dir;  // Suppress unused parameter warning
     return 0;
 }
 
-/* close implementation */
-int _close(int file) {
-    // Stub implementation
-    return 0;
+/* Additional functions that might be needed */
+int _kill(int pid, int sig) {
+    (void)pid; // Suppress unused parameter warning
+    (void)sig; // Suppress unused parameter warning
+    errno = ENOSYS;
+    return -1;
 }
 
-/* sbrk implementation */
-void *_sbrk(int incr) {
-    // Stub implementation
-    extern char end;
-    static char *heap_end = &end;
-    char *prev_heap_end = heap_end;
-    
-    if (heap_end + incr > (char*)0x20000000) {
-        return (void*)-1;
-    }
-    
-    heap_end += incr;
-    return (void*)prev_heap_end;
+int _getpid(void) {
+    return 1;
 }

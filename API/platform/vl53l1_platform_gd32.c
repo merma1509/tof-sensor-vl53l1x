@@ -4,7 +4,7 @@
  */
 
 #include "vl53l1_platform_gd32.h"
-#include "../../include/i2c_driver.h"
+#include "../../../include/i2c_driver_new.h"
 
 /* GD32E230 I2C implementation for VL53L1X ULD API */
 
@@ -12,7 +12,7 @@ int8_t VL53L1X_WriteMulti(uint16_t dev, uint16_t index, uint8_t *pdata, uint32_t
     (void)dev; // Suppress unused parameter warning
     
     for (uint32_t i = 0; i < count; i++) {
-        if (VL53L1X_WriteReg(dev, index + i, pdata[i]) != 0) {
+        if (i2c_write_register(index + i, pdata[i]) != 0) {
             return -1; // Error
         }
     }
@@ -23,17 +23,17 @@ int8_t VL53L1X_ReadMulti(uint16_t dev, uint16_t index, uint8_t *pdata, uint32_t 
     (void)dev; // Suppress unused parameter warning
     
     for (uint32_t i = 0; i < count; i++) {
-        pdata[i] = VL53L1X_ReadReg(dev, index + i);
+        pdata[i] = i2c_read_register(index + i);
     }
     return 0; // Success
 }
 
 int8_t VL53L1X_WriteReg(uint16_t dev, uint16_t index, uint8_t data) {
-    return i2c_write_register(0x52, index, data);
+    return i2c_write_register(index, data);
 }
 
 uint8_t VL53L1X_ReadReg(uint16_t dev, uint16_t index) {
-    return i2c_read_register(0x52, index);
+    return i2c_read_register(index);
 }
 
 void VL53L1X_PollingDelay(void) {

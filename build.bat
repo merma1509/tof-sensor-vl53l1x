@@ -62,27 +62,27 @@ echo [SUCCESS] Build directory created
 REM Set compiler flags
 set CFLAGS=-mcpu=cortex-m23 -mthumb -mfloat-abi=soft -O2 -Wall -D GD32E230 -D SYSTEM_CLOCK_48MHZ -std=c99
 set INCLUDES=-I"%PROJECT_DIR%include"
-set LDFLAGS=-mcpu=cortex-m23 -mthumb -mfloat-abi=soft -specs=nano.specs -Wl,--gc-sections -Wl,--print-memory-usage
+set LDFLAGS=-mcpu=cortex-m23 -mthumb -mfloat-abi=soft -specs=nano.specs -Wl,--gc-sections -Wl,--print-memory-usage -nostdlib -Wl,--start-group -lgcc -Wl,--end-group -Wl,--no-warn-rwx-segments
 
 echo.
 echo ========================================
 echo Compiling Source Files
 echo ========================================
 
-REM Compile main implementation
-echo Compiling main_vl53l1x.c...
+REM Compile main application
+echo Compiling main_vl53l1x_uart.c...
 if defined ARM_GCC_PATH (
-    "%ARM_GCC_PATH%\arm-none-eabi-gcc.exe" %CFLAGS% %INCLUDES% -c "%PROJECT_DIR%src\main_vl53l1x.c" -o "%BUILD_DIR%\main_vl53l1x.o"
+    "%ARM_GCC_PATH%\arm-none-eabi-gcc.exe" %CFLAGS% %INCLUDES% -c "%PROJECT_DIR%src\main_vl53l1x_uart.c" -o "%BUILD_DIR%\main_vl53l1x_uart.o"
 ) else (
-    arm-none-eabi-gcc.exe %CFLAGS% %INCLUDES% -c "%PROJECT_DIR%src\main_vl53l1x.c" -o "%BUILD_DIR%\main_vl53l1x.o"
+    arm-none-eabi-gcc.exe %CFLAGS% %INCLUDES% -c "%PROJECT_DIR%src\main_vl53l1x_uart.c" -o "%BUILD_DIR%\main_vl53l1x_uart.o"
 )
 
-if not exist "%BUILD_DIR%\main_vl53l1x.o" (
-    echo [ERROR] Failed to compile main_vl53l1x.c
+if not exist "%BUILD_DIR%\main_vl53l1x_uart.o" (
+    echo [ERROR] Failed to compile main_vl53l1x_uart.c
     pause
     exit /b 1
 )
-echo [SUCCESS] main_vl53l1x.c compiled
+echo [SUCCESS] main_vl53l1x_uart.c compiled
 
 REM Compile syscalls
 echo Compiling syscalls.c...
@@ -99,11 +99,42 @@ if not exist "%BUILD_DIR%\syscalls.o" (
 )
 echo [SUCCESS] syscalls.c compiled
 
+REM Compile uart_commands
+echo Compiling uart_commands.c...
+if defined ARM_GCC_PATH (
+    "%ARM_GCC_PATH%\arm-none-eabi-gcc.exe" %CFLAGS% %INCLUDES% -c "%PROJECT_DIR%src\uart_commands.c" -o "%BUILD_DIR%\uart_commands.o"
+) else (
+    arm-none-eabi-gcc.exe %CFLAGS% %INCLUDES% -c "%PROJECT_DIR%src\uart_commands.c" -o "%BUILD_DIR%\uart_commands.o"
+)
+
+if not exist "%BUILD_DIR%\uart_commands.o" (
+    echo [ERROR] Failed to compile uart_commands.c
+    pause
+    exit /b 1
+)
+echo [SUCCESS] uart_commands.c compiled
+
+REM Compile uart_init
+echo Compiling uart_init.c...
+if defined ARM_GCC_PATH (
+    "%ARM_GCC_PATH%\arm-none-eabi-gcc.exe" %CFLAGS% %INCLUDES% -c "%PROJECT_DIR%src\uart_init.c" -o "%BUILD_DIR%\uart_init.o"
+) else (
+    arm-none-eabi-gcc.exe %CFLAGS% %INCLUDES% -c "%PROJECT_DIR%src\uart_init.c" -o "%BUILD_DIR%\uart_init.o"
+)
+
+if not exist "%BUILD_DIR%\uart_init.o" (
+    echo [ERROR] Failed to compile uart_init.c
+    pause
+    exit /b 1
+)
+echo [SUCCESS] uart_init.c compiled
+
 REM Check for additional source files
 if exist "%PROJECT_DIR%src\*.c" (
     echo.
     echo Compiling additional source files...
     for %%F in ("%PROJECT_DIR%src\*.c") do (
+        if not "%%~nF"=="main_vl53l1x" if not "%%~nF"=="syscalls" if not "%%~nF"=="uart_commands" if not "%%~nF"=="uart_init" (
         if not "%%~nF"=="main_vl53l1x" if not "%%~nF"=="syscalls" (
             echo Compiling %%~nF.c...
             if defined ARM_GCC_PATH (
@@ -126,13 +157,8 @@ echo ========================================
 echo Linking
 echo ========================================
 
-REM Collect all object files
-set OBJECT_FILES="%BUILD_DIR%\main_vl53l1x.o" "%BUILD_DIR%\syscalls.o"
-for %%F in ("%BUILD_DIR%\*.o") do (
-    if not "%%~nF"=="main_vl53l1x" if not "%%~nF"=="syscalls" (
-        set OBJECT_FILES=%OBJECT_FILES% "%%F"
-    )
-)
+REM Set object files for linking
+set OBJECT_FILES="%BUILD_DIR%\main_vl53l1x_uart.o" "%BUILD_DIR%\syscalls.o" "%BUILD_DIR%\uart_commands.o" "%BUILD_DIR%\uart_init.o" "%BUILD_DIR%\i2c_driver.o"
 
 REM Link
 echo Linking objects: %OBJECT_FILES%
