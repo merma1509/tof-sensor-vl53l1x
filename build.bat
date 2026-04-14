@@ -158,13 +158,28 @@ if not exist "%BUILD_DIR%\sdk_integration.o" (
 )
 echo [SUCCESS] sdk_integration.c compiled
 
+REM Compile filter module
+echo Compiling filter.c...
+if defined ARM_GCC_PATH (
+    "%ARM_GCC_PATH%\arm-none-eabi-gcc.exe" %CFLAGS% %INCLUDES% -c "%PROJECT_DIR%src\filter.c" -o "%BUILD_DIR%\filter.o"
+) else (
+    arm-none-eabi-gcc.exe %CFLAGS% %INCLUDES% -c "%PROJECT_DIR%src\filter.c" -o "%BUILD_DIR%\filter.o"
+)
+
+if not exist "%BUILD_DIR%\filter.o" (
+    echo [ERROR] Failed to compile filter.c
+    pause
+    exit /b 1
+)
+echo [SUCCESS] filter.c compiled
+
 echo.
 echo ========================================
 echo Linking
 echo ========================================
 
 REM Define object files
-set OBJECT_FILES=%BUILD_DIR%\startup_gd32e23x.o %BUILD_DIR%\main_vl53l1x_uart.o %BUILD_DIR%\uart_commands.o %BUILD_DIR%\uart_init.o %BUILD_DIR%\i2c_driver.o %BUILD_DIR%\sdk_integration.o %BUILD_DIR%\syscalls.o
+set OBJECT_FILES=%BUILD_DIR%\startup_gd32e23x.o %BUILD_DIR%\main_vl53l1x_uart.o %BUILD_DIR%\uart_commands.o %BUILD_DIR%\uart_init.o %BUILD_DIR%\i2c_driver.o %BUILD_DIR%\sdk_integration.o %BUILD_DIR%\syscalls.o %BUILD_DIR%\filter.o
 
 REM Link
 echo Linking objects: %OBJECT_FILES%

@@ -5,6 +5,7 @@
 
 #include "../include/uart_commands.h"
 #include "../include/i2c_driver.h"
+#include "../include/filter.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -273,6 +274,35 @@ void uart_process_command(char *cmd) {
             uart_send_string("\r\n");
         }
     }
+    else if (strcmp(cmd, CMD_FILTER_ON) == 0) {
+        #if FILTER_ENABLED
+            filter_set_enabled(1);
+            uart_send_response(RESP_OK);
+            uart_send_string(" - Filter enabled\r\n");
+        #else
+            uart_send_response(RESP_ERROR);
+            uart_send_string(" - Filter disabled at compile time\r\n");
+        #endif
+    }
+    else if (strcmp(cmd, CMD_FILTER_OFF) == 0) {
+        #if FILTER_ENABLED
+            filter_set_enabled(0);
+            uart_send_response(RESP_OK);
+            uart_send_string(" - Filter disabled\r\n");
+        #else
+            uart_send_response(RESP_ERROR);
+            uart_send_string(" - Filter disabled at compile time\r\n");
+        #endif
+    }
+    else if (strcmp(cmd, CMD_FILTER_STATUS) == 0) {
+        #if FILTER_ENABLED
+            uart_send_string("Filter: ");
+            uart_send_string(filter_get_status_string());
+            uart_send_string("\r\n");
+        #else
+            uart_send_string("Filter: DISABLED (compile-time)\r\n");
+        #endif
+    }
     else if (strcmp(cmd, CMD_HELP) == 0) {
         uart_show_help();
     }
@@ -348,16 +378,12 @@ void uart_show_help(void) {
     uart_send_string("    SHORT   - Short range mode\r\n");
     uart_send_string("    MEDIUM  - Medium range mode\r\n");
     uart_send_string("    LONG    - Long range mode\r\n");
-    uart_send_string("  FILTER    - Filter commands:\r\n");
-    uart_send_string("    TYPE <none|moving|median|exponential|kalman>\r\n");
-    uart_send_string("    WINDOW <2-32> - Set filter window size\r\n");
-    uart_send_string("    ENABLE <on|off> - Enable/disable filter\r\n");
-    uart_send_string("    RESET - Reset filter state\r\n");
-    uart_send_string("    STATUS - Show filter status\r\n");
+    uart_send_string("  FILTER ON|OFF|STATUS - Control distance filter\r\n");
     uart_send_string("  HELP      - Show this help\r\n");
     uart_send_string("\r\nExamples:\r\n");
-    uart_send_string("  FILTER TYPE moving WINDOW 8 ENABLE\r\n");
     uart_send_string("  START\r\n");
     uart_send_string("  FILTER STATUS\r\n");
+    uart_send_string("  FILTER OFF  (test without filter)\r\n");
+    uart_send_string("  FILTER ON   (test with filter)\r\n");
     uart_send_string("\r\n");
 }

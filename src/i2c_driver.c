@@ -7,18 +7,20 @@
 
 /* I2C implementation for GD32E230 */
 void i2c_init(void) {
-    // Configure I2C pins PB6(SDA), PB7(SCL)
+    // Configure I2C pins PA6(SCL), PA7(SDA)
     volatile uint32_t *RCU_AHBEN = (uint32_t*)0x40021014;
-    *RCU_AHBEN |= (1 << 17) | (1 << 18); // GPIOA, GPIOB enable
+    *RCU_AHBEN |= (1 << 17); // GPIOA enable only 
     
-    // Configure PB6 and PB7 as alternate function open-drain
-    volatile uint32_t *GPIO_CTL0 = (uint32_t*)0x48000008;
-    *GPIO_CTL0 &= ~((0xF << 24) | (0xF << 28)); // Clear PB6, PB7
+    // Configure PA6 and PA7 as alternate function open-drain
+    // GPIOA_CTL0 register: PA6 = bits 24-27, PA7 = bits 28-31
+    volatile uint32_t *GPIO_CTL0 = (uint32_t*)0x48000000;
+    *GPIO_CTL0 &= ~((0xF << 24) | (0xF << 28)); // Clear PA6, PA7
     *GPIO_CTL0 |= (0xC << 24) | (0xC << 28); // AF output, open-drain, 50MHz
     
-    // Enable pull-up for PB6, PB7
+    // Enable pull-up for PA6, PA7
+    // GPIOA_PUD register: PA6 = bits 12-13, PA7 = bits 14-15
     volatile uint32_t *GPIO_PUD = (uint32_t*)0x4800000C;
-    *GPIO_PUD &= ~((0x3 << 12) | (0x3 << 14)); // Clear PB6, PB7
+    *GPIO_PUD &= ~((0x3 << 12) | (0x3 << 14)); // Clear PA6, PA7
     *GPIO_PUD |= (0x1 << 12) | (0x1 << 14); // Pull-up
     
     // Enable I2C0 clock

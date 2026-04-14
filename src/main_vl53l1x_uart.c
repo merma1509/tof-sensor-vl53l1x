@@ -5,9 +5,13 @@
 
 #include "../include/uart_commands.h"
 #include "../include/i2c_driver.h"
+#include "../include/filter.h"
 
 // Forward declarations
 extern void uart_send_string(const char *str);
+
+/* Filter state */
+static filter_state_t distance_filter;
 
 /* System clock initialization */
 void SystemInit(void) {
@@ -114,28 +118,40 @@ int main(void) {
     // Initialize UART
     uart_init();
     
+    // Initialize filter
+    filter_init(&distance_filter);
+    
     // Show welcome message
     uart_send_string("\r\nVL53L1X GD32E230 UART Interface\r\n");
-    uart_send_string("Version 1.0 - Ready for testing\r\n");
+    uart_send_string("Version 1.1 - With Combined Filter\r\n");
     
     // Run automated test sequence
     test_vl53l1x_functionality();
     
-    // Main loop for manual testing
+    // Main loop for Hardware Reading
     while (1) {
         // Check if measurement is ready using I2C
         uint8_t status = i2c_read_register(0x013); // VL53L1X_GPIO_HV_MUX_ACTIVE
-        uint8_t data_ready = (status & 0x01) ? 1 : 0; // Check data ready bit
+        uint8_t data_ready = (status & 0x01) ? 1 : 0;   // Check data ready bit
         if (data_ready) {
-            // Read distance using I2C
+            // Read 16-bit distance from VL53L1X registers
             uint8_t distance_high = i2c_read_register(0x096); // VL53L1X_RESULT_DISTANCE_HIGH
             uint8_t distance_low = i2c_read_register(0x097); // VL53L1X_RESULT_DISTANCE_LOW
             uint16_t distance = (distance_high << 8) | distance_low;
             
-            // Apply filter
-            uint16_t filtered_distance = distance; // No filter for now
+            // Apply filter if enabled (compile-time and runtime)
+            uint16_t output_distance;
+            #if FILTER_ENABLED
+                if (filter_get_enabled()) {
+                    output_distance = filter_process(&distance_filter, distance);
+                } else {
+                    output_distance = distance;  // Filter disabled at runtime
+                }
+            #else
+                output_distance = distance;  // Filter disabled at compile-time
+            #endif
             
-            uart_send_distance(filtered_distance);
+            uart_send_distance(output_distance); // Send filtered distance to PC via UART
             // Clear interrupt using I2C
             i2c_write_register(0x011, 0x01); // VL53L1X_SYSTEM_INTERRUPT_CLEAR
         }

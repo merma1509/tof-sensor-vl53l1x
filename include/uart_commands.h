@@ -9,20 +9,23 @@
 #include <stdint.h>
 
 /* Command definitions */
-#define CMD_START        "START"
-#define CMD_STOP         "STOP"
-#define CMD_CALIBRATE    "CAL"
-#define CMD_MODE_SHORT   "SHORT"
-#define CMD_MODE_MEDIUM  "MEDIUM"
-#define CMD_MODE_LONG    "LONG"
-#define CMD_STATUS       "STATUS"
-#define CMD_HELP         "HELP"
+#define CMD_START         "START"		    // Start measurements
+#define CMD_STOP          "STOP"		        // Stop measurements
+#define CMD_CALIBRATE     "CAL"		        // Calibrate sensor
+#define CMD_MODE_SHORT    "SHORT"		    // Short range mode
+#define CMD_MODE_MEDIUM   "MEDIUM"		    // Medium range mode
+#define CMD_MODE_LONG     "LONG"		        // Long range mode
+#define CMD_STATUS        "STATUS"		    // Show status
+#define CMD_HELP          "HELP"		        // Show help
+#define CMD_FILTER_ON     "FILTER ON"	    // Enable filter
+#define CMD_FILTER_OFF    "FILTER OFF"	    // Disable filter
+#define CMD_FILTER_STATUS "FILTER STATUS"	// Show filter status
 
 /* Command response codes */
-#define RESP_OK          "OK"
-#define RESP_ERROR       "ERROR"
-#define RESP_BUSY        "BUSY"
-#define RESP_READY       "READY"
+#define RESP_OK          "OK"		        // Command executed successfully
+#define RESP_ERROR       "ERROR"		    // Command failed
+#define RESP_BUSY        "BUSY"		        // System is busy
+#define RESP_READY       "READY"		    // System is ready
 
 /* Function declarations */
 void uart_commands_init(void);
