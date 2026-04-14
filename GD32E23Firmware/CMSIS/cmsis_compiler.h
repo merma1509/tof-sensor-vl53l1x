@@ -49,53 +49,25 @@
 
 
 /*
- * IAR Compiler
+ * Clang/LLVM Compiler
  */
-#elif defined ( __ICCARM__ )
-
-  #ifndef   __ASM
-    #define __ASM                     __asm
-  #endif
-  #ifndef   __INLINE
-    #define __INLINE                  inline
-  #endif
-  #ifndef   __STATIC_INLINE
-    #define __STATIC_INLINE           static inline
-  #endif
-
-  #include <cmsis_iar.h>
-
-  #ifndef   __NO_RETURN
-    #define __NO_RETURN               __noreturn
-  #endif
-  #ifndef   __USED
-    #define __USED                    __root
-  #endif
-  #ifndef   __WEAK
-    #define __WEAK                    __weak
-  #endif
-  #ifndef   __UNALIGNED_UINT32
-    __packed struct T_UINT32 { uint32_t v; };
-      #define __UNALIGNED_UINT32(x)     (((struct T_UINT32 *)(x))->v)
-  #endif
-  #ifndef   __ALIGNED
-    #warning No compiler specific solution for __ALIGNED. __ALIGNED is ignored.
-    #define __ALIGNED(x)
-  #endif
-  #ifndef   __PACKED
-    #define __PACKED                  __packed
-  #endif
-  #ifndef   __PACKED_STRUCT
-    #define __PACKED_STRUCT           __packed struct
-  #endif
+#elif defined ( __clang__ )
+  #define __ASM                     _asm
+  #define __INLINE                  inline
+  #define __STATIC_INLINE           static inline
+  #define __NO_RETURN
+  #define __USED                    __attribute__((used))
+  #define __WEAK                    __attribute__((weak))
+  #define __UNALIGNED_UINT32(x)     (((struct T_UINT32 *)(x))->v)
+  #define __ALIGNED(x)              __attribute__((aligned(x)))
+  #define __PACKED                  __attribute__((packed))
+  #define __PACKED_STRUCT           struct __attribute__((packed))
 
 
 /*
- * TI ARM Compiler
+ * IAR Compiler
  */
-#elif defined ( __TI_ARM__ )
-  #include <cmsis_ccs.h>
-
+#elif defined ( __ICCARM__ )
   #ifndef   __ASM
     #define __ASM                     __asm
   #endif
@@ -105,28 +77,7 @@
   #ifndef   __STATIC_INLINE
     #define __STATIC_INLINE           static inline
   #endif
-  #ifndef   __NO_RETURN
-    #define __NO_RETURN               __attribute__((noreturn))
-  #endif
-  #ifndef   __USED
-    #define __USED                    __attribute__((used))
-  #endif
-  #ifndef   __WEAK
-    #define __WEAK                    __attribute__((weak))
-  #endif
-  #ifndef   __UNALIGNED_UINT32
-    struct __attribute__((packed)) T_UINT32 { uint32_t v; };
-    #define __UNALIGNED_UINT32(x)     (((struct T_UINT32 *)(x))->v)
-  #endif
-  #ifndef   __ALIGNED
-    #define __ALIGNED(x)              __attribute__((aligned(x)))
-  #endif
-  #ifndef   __PACKED
-    #define __PACKED                  __attribute__((packed))
-  #endif
-  #ifndef   __PACKED_STRUCT
-    #define __PACKED_STRUCT           struct __attribute__((packed))
-  #endif
+  #include <cmsis_iar.h>
 
 
 /*
@@ -139,80 +90,6 @@
    * Including the CMSIS ones.
    */
 
-  #ifndef   __ASM
-    #define __ASM                     __asm
-  #endif
-  #ifndef   __INLINE
-    #define __INLINE                  inline
-  #endif
-  #ifndef   __STATIC_INLINE
-    #define __STATIC_INLINE           static inline
-  #endif
-  #ifndef   __NO_RETURN
-    #define __NO_RETURN               __attribute__((noreturn))
-  #endif
-  #ifndef   __USED
-    #define __USED                    __attribute__((used))
-  #endif
-  #ifndef   __WEAK
-    #define __WEAK                    __attribute__((weak))
-  #endif
-  #ifndef   __UNALIGNED_UINT32
-    struct __packed__ T_UINT32 { uint32_t v; };
-    #define __UNALIGNED_UINT32(x)     (((struct T_UINT32 *)(x))->v)
-  #endif
-  #ifndef   __ALIGNED
-    #define __ALIGNED(x)              __align(x)
-  #endif
-  #ifndef   __PACKED
-    #define __PACKED                  __packed__
-  #endif
-  #ifndef   __PACKED_STRUCT
-    #define __PACKED_STRUCT           struct __packed__
-  #endif
-
-
-/*
- * COSMIC Compiler
- */
-#elif defined ( __CSMC__ )
-   #include <cmsis_csm.h>
-
- #ifndef   __ASM
-    #define __ASM                     _asm
-  #endif
-  #ifndef   __INLINE
-    #define __INLINE                  inline
-  #endif
-  #ifndef   __STATIC_INLINE
-    #define __STATIC_INLINE           static inline
-  #endif
-  #ifndef   __NO_RETURN
-    // NO RETURN is automatically detected hence no warning here
-    #define __NO_RETURN
-  #endif
-  #ifndef   __USED
-    #warning No compiler specific solution for __USED. __USED is ignored.
-    #define __USED
-  #endif
-  #ifndef   __WEAK
-    #define __WEAK                    __weak
-  #endif
-  #ifndef   __UNALIGNED_UINT32
-    @packed struct T_UINT32 { uint32_t v; };
-    #define __UNALIGNED_UINT32(x)     (((struct T_UINT32 *)(x))->v)
-  #endif
-  #ifndef   __ALIGNED
-    #warning No compiler specific solution for __ALIGNED. __ALIGNED is ignored.
-    #define __ALIGNED(x)
-  #endif
-  #ifndef   __PACKED
-    #define __PACKED                  @packed
-  #endif
-  #ifndef   __PACKED_STRUCT
-    #define __PACKED_STRUCT           @packed struct
-  #endif
-
 
 #else
   #error Unknown compiler.
@@ -220,4 +97,3 @@
 
 
 #endif /* __CMSIS_COMPILER_H */
-

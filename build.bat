@@ -60,9 +60,9 @@ if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
 echo [SUCCESS] Build directory created
 
 REM Set compiler flags
-set CFLAGS=-mcpu=cortex-m23 -mthumb -mfloat-abi=soft -O2 -Wall -D GD32E230 -D SYSTEM_CLOCK_48MHZ -std=c99
+set CFLAGS=-mcpu=cortex-m23 -mthumb -Os -g -ffunction-sections -fdata-sections -I"%PROJECT_DIR%GD32E23Firmware/CMSIS" -I"%PROJECT_DIR%GD32E23Firmware/CMSIS/GD/GD32E23x/Include" -I"%PROJECT_DIR%GD32E23Firmware/GD32E23x_standard_peripheral/Include" -I"%PROJECT_DIR%include" -I"%PROJECT_DIR%API/core" -O2 -Wall -D GD32E230 -D SYSTEM_CLOCK_48MHZ -std=c99
 set INCLUDES=-I"%PROJECT_DIR%include"
-set LDFLAGS=-mcpu=cortex-m23 -mthumb -mfloat-abi=soft -specs=nano.specs -Wl,--gc-sections -Wl,--print-memory-usage -nostdlib -Wl,--start-group -lgcc -Wl,--end-group -Wl,--no-warn-rwx-segments
+set LDFLAGS=-mcpu=cortex-m23 -mthumb -mfloat-abi=soft -specs=nano.specs -Wl,--gc-sections -Wl,--print-memory-usage -Wl,--start-group -lc -lgcc -Wl,--end-group -Wl,--no-warn-rwx-segments
 
 echo.
 echo ========================================
@@ -114,6 +114,20 @@ if not exist "%BUILD_DIR%\uart_commands.o" (
 )
 echo [SUCCESS] uart_commands.c compiled
 
+REM Compile startup file
+echo Compiling startup_gd32e23x.c...
+if defined ARM_GCC_PATH (
+    "%ARM_GCC_PATH%\arm-none-eabi-gcc.exe" %CFLAGS% %INCLUDES% -c "%PROJECT_DIR%src\startup_gd32e23x.c" -o "%BUILD_DIR%\startup_gd32e23x.o"
+) else (
+    arm-none-eabi-gcc.exe %CFLAGS% %INCLUDES% -c "%PROJECT_DIR%src\startup_gd32e23x.c" -o "%BUILD_DIR%\startup_gd32e23x.o"
+)
+if not exist "%BUILD_DIR%\startup_gd32e23x.o" (
+    echo [ERROR] Failed to compile startup_gd32e23x.c
+    pause
+    exit /b 1
+)
+echo [SUCCESS] startup_gd32e23x.c compiled
+
 REM Compile uart_init
 echo Compiling uart_init.c...
 if defined ARM_GCC_PATH (
@@ -129,36 +143,28 @@ if not exist "%BUILD_DIR%\uart_init.o" (
 )
 echo [SUCCESS] uart_init.c compiled
 
-REM Check for additional source files
-if exist "%PROJECT_DIR%src\*.c" (
-    echo.
-    echo Compiling additional source files...
-    for %%F in ("%PROJECT_DIR%src\*.c") do (
-        if not "%%~nF"=="main_vl53l1x" if not "%%~nF"=="syscalls" if not "%%~nF"=="uart_commands" if not "%%~nF"=="uart_init" (
-        if not "%%~nF"=="main_vl53l1x" if not "%%~nF"=="syscalls" (
-            echo Compiling %%~nF.c...
-            if defined ARM_GCC_PATH (
-                "%ARM_GCC_PATH%\arm-none-eabi-gcc.exe" %CFLAGS% %INCLUDES% -c "%%F" -o "%BUILD_DIR%\%%~nF.o"
-            ) else (
-                arm-none-eabi-gcc.exe %CFLAGS% %INCLUDES% -c "%%F" -o "%BUILD_DIR%\%%~nF.o"
-            )
-            if not exist "%BUILD_DIR%\%%~nF.o" (
-                echo [ERROR] Failed to compile %%~nF.c
-                pause
-                exit /b 1
-            )
-            echo [SUCCESS] %%~nF.c compiled
-        )
-    )
+REM Compile sdk_integration
+echo Compiling sdk_integration.c...
+if defined ARM_GCC_PATH (
+    "%ARM_GCC_PATH%\arm-none-eabi-gcc.exe" %CFLAGS% %INCLUDES% -c "%PROJECT_DIR%src\sdk_integration.c" -o "%BUILD_DIR%\sdk_integration.o"
+) else (
+    arm-none-eabi-gcc.exe %CFLAGS% %INCLUDES% -c "%PROJECT_DIR%src\sdk_integration.c" -o "%BUILD_DIR%\sdk_integration.o"
 )
+
+if not exist "%BUILD_DIR%\sdk_integration.o" (
+    echo [ERROR] Failed to compile sdk_integration.c
+    pause
+    exit /b 1
+)
+echo [SUCCESS] sdk_integration.c compiled
 
 echo.
 echo ========================================
 echo Linking
 echo ========================================
 
-REM Set object files for linking
-set OBJECT_FILES="%BUILD_DIR%\main_vl53l1x_uart.o" "%BUILD_DIR%\syscalls.o" "%BUILD_DIR%\uart_commands.o" "%BUILD_DIR%\uart_init.o" "%BUILD_DIR%\i2c_driver.o"
+REM Define object files
+set OBJECT_FILES=%BUILD_DIR%\startup_gd32e23x.o %BUILD_DIR%\main_vl53l1x_uart.o %BUILD_DIR%\uart_commands.o %BUILD_DIR%\uart_init.o %BUILD_DIR%\i2c_driver.o %BUILD_DIR%\sdk_integration.o %BUILD_DIR%\syscalls.o
 
 REM Link
 echo Linking objects: %OBJECT_FILES%

@@ -33,5 +33,6 @@ void uart_send_response(const char *response);
 void uart_send_distance(uint16_t distance);
 void uart_show_help(void);
 char uart_receive_char(void);
+void uart_send_string(const char *str);
 
 #endif /* UART_COMMANDS_H */

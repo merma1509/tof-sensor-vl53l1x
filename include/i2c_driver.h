@@ -14,16 +14,6 @@
 /* I2C register addresses for GD32E230 */
 #define I2C0_BASE          0x40005400
 
-/* I2C control bits */
-#define I2C_CTL0_I2CEN      (1 << 0)
-#define I2C_CTL0_SMBEN      (1 << 1)
-#define I2C_CTL0_SSTEN      (1 << 8)
-#define I2C_CTL0_I2CCLK     (1 << 9)
-#define I2C_CTL0_ARPDIS     (1 << 10)
-#define I2C_CTL0_START       (1 << 8)
-#define I2C_CTL0_STOP        (1 << 9)
-#define I2C_CTL0_ACKEN       (1 << 10)
-
 /* I2C status bits */
 #define I2C_STAT_BERR       (1 << 8)
 #define I2C_STAT_LOSTARB    (1 << 9)
@@ -47,7 +37,7 @@ uint8_t i2c_read_register(uint16_t reg);
 /* VL53L1X ULD API compatible functions */
 int8_t VL53L1X_WriteReg(uint16_t dev, uint16_t index, uint8_t data);
 int8_t VL53L1X_ReadReg(uint16_t dev, uint16_t index);
-int8_t VL53L1X_WriteMulti(uint16_t dev, uint16_t index, uint8_t *pdata, uint32_t count);
-int8_t VL53L1X_ReadMulti(uint16_t dev, uint16_t index, uint8_t *pdata, uint32_t count);
+int32_t VL53L1X_WriteMulti(uint16_t index, uint8_t *pdata, uint32_t count);
+int32_t VL53L1X_ReadMulti(uint16_t index, uint8_t *pdata, uint32_t count);
 
 #endif /* I2C_DRIVER_H */

@@ -4,10 +4,11 @@
  */
 
 #include <stdint.h>
-#include <errno.h>
 
-#undef errno
-int errno;
+/* errno declarations */
+extern int errno;
+#define ENOMEM 12
+#define ENOSYS 88
 
 /* _exit implementation */
 void _exit(int status) {

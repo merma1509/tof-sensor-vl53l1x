@@ -1,11 +1,11 @@
 /**
  * @file  i2c_driver.c
- * @brief Real I2C driver for GD32E230 with VL53L1X support
+ * @brief I2C driver for GD32E230 with VL53L1X support
  */
 
 #include "../include/i2c_driver.h"
 
-/* Real I2C implementation for GD32E230 */
+/* I2C implementation for GD32E230 */
 void i2c_init(void) {
     // Configure I2C pins PB6(SDA), PB7(SCL)
     volatile uint32_t *RCU_AHBEN = (uint32_t*)0x40021014;

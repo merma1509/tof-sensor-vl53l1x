@@ -6,8 +6,9 @@
 #include "../include/uart_commands.h"
 #include "../include/i2c_driver.h"
 #include <string.h>
+#include <stdio.h>
 
-/* Simple delay function */
+/* Delay function */
 static void delay_ms(uint32_t ms) {
     volatile uint32_t count = ms * 48000; // Approximate for 48MHz
     while (count--) {
@@ -20,7 +21,7 @@ static uint8_t measuring = 0;
 static uint16_t current_distance = 0;
 
 /* UART send string function */
-static void uart_send_string(const char *str) {
+void uart_send_string(const char *str) {
     while (*str) {
         // Wait for transmit buffer empty
         while (!(*(volatile uint32_t*)0x40011004 & (1 << 7))); // USART_STAT_TBE
@@ -68,7 +69,7 @@ void uart_process_command(char *cmd) {
     if (strcmp(cmd, CMD_START) == 0) {
         if (!measuring) {
             // Start VL53L1X ranging using I2C
-            // Simple start - write to start register
+            // Write to start register
             uint8_t start_result = i2c_write_register(0x010, 0x01); // VL53L1X_SYSRANGE_START
             if (start_result == 0) {
                 measuring = 1;
@@ -275,11 +276,31 @@ void uart_process_command(char *cmd) {
     else if (strcmp(cmd, CMD_HELP) == 0) {
         uart_show_help();
     }
-    else {
-        uart_send_response(RESP_ERROR);
-        uart_send_string(" - Unknown command\r\n");
+    else if (strcmp(cmd, "START") == 0) {
+        measuring = 1;
+        uart_send_string("Measuring started...");
+    } else if (strcmp(cmd, "STOP") == 0) {
+        measuring = 0;
+        uart_send_string("Measuring stopped");
+    } else if (strcmp(cmd, "GET") == 0) {
+        uint8_t distance_high = i2c_read_register(0x0096);
+        uint8_t distance_low = i2c_read_register(0x0097);
+        uint16_t distance = (distance_high << 8) | distance_low;
+        
+        if (distance != 0) {
+            current_distance = distance;
+            char buffer[50];
+            sprintf(buffer, "Distance: %d mm", distance);
+            uart_send_string(buffer);
+        } else {
+            uart_send_string("Error reading distance");
+        }
+    } else {
+        uart_send_string("Unknown command");
     }
-    
+}
+
+void uart_command_loop(void) {
     uart_send_string("VL53L1X>");
 }
 
@@ -296,15 +317,47 @@ void uart_send_distance(uint16_t distance) {
     uart_send_string(" mm\r\n");
 }
 
-/* Show help */
+/* Command list */
+const char *commands[] = {
+    "START",
+    "STOP", 
+    "GET",
+    "STATUS",
+    "CALIBRATE",
+    "MODE_SHORT",
+    "MODE_MEDIUM", 
+    "MODE_LONG",
+    "FILTER",
+    "WINDOW",
+    "ENABLE", 
+    "RESET",
+    "STATUS",
+    "HELP"
+};
+
+/* Show help information */
 void uart_show_help(void) {
-    uart_send_string("\r\nVL53L1X Commands:\r\n");
-    uart_send_string("  START    - Start ranging\r\n");
-    uart_send_string("  STOP     - Stop ranging\r\n");
-    uart_send_string("  CAL      - Calibrate sensor\r\n");
-    uart_send_string("  SHORT    - Short range mode (15ms)\r\n");
-    uart_send_string("  MED      - Medium range mode (50ms)\r\n");
-    uart_send_string("  LONG     - Long range mode (100ms)\r\n");
-    uart_send_string("  STATUS   - Show status\r\n");
-    uart_send_string("  HELP     - Show this help\r\n");
+    uart_send_string("\r\n=== VL53L1X Distance Sensor ===\r\n");
+    uart_send_string("Commands:\r\n");
+    uart_send_string("  START     - Start distance measurement\r\n");
+    uart_send_string("  STOP      - Stop distance measurement\r\n");
+    uart_send_string("  GET       - Get current distance\r\n");
+    uart_send_string("  STATUS    - Show system status\r\n");
+    uart_send_string("  CALIBRATE - Calibrate sensor\r\n");
+    uart_send_string("  MODE_*   - Set distance mode:\r\n");
+    uart_send_string("    SHORT   - Short range mode\r\n");
+    uart_send_string("    MEDIUM  - Medium range mode\r\n");
+    uart_send_string("    LONG    - Long range mode\r\n");
+    uart_send_string("  FILTER    - Filter commands:\r\n");
+    uart_send_string("    TYPE <none|moving|median|exponential|kalman>\r\n");
+    uart_send_string("    WINDOW <2-32> - Set filter window size\r\n");
+    uart_send_string("    ENABLE <on|off> - Enable/disable filter\r\n");
+    uart_send_string("    RESET - Reset filter state\r\n");
+    uart_send_string("    STATUS - Show filter status\r\n");
+    uart_send_string("  HELP      - Show this help\r\n");
+    uart_send_string("\r\nExamples:\r\n");
+    uart_send_string("  FILTER TYPE moving WINDOW 8 ENABLE\r\n");
+    uart_send_string("  START\r\n");
+    uart_send_string("  FILTER STATUS\r\n");
+    uart_send_string("\r\n");
 }

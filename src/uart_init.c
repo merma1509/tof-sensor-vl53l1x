@@ -5,19 +5,6 @@
 
 #include "../include/uart_commands.h"
 
-// Forward declaration
-static void uart_send_string(const char *str);
-
-/* UART send string function */
-static void uart_send_string(const char *str) {
-    while (*str) {
-        // Wait for transmit buffer empty
-        while (!(*(volatile uint32_t*)0x40011008 & (1 << 7))); // USART_STAT_TBE
-        *(volatile uint32_t*)0x4001100C = *str; // USART_DATA
-        str++;
-    }
-}
-
 /* UART initialization function */
 void uart_init(void) {
     // Enable GPIOA clock for PA9(TX) and PA10(RX)
@@ -71,39 +58,4 @@ char uart_receive_char(void) {
     while (!(*USART0_STAT & (1 << 5))); // Wait for RBNE flag
     
     return (char)(*USART0_DATA);
-}
-
-/* UART command processing loop */
-void uart_command_loop(void) {
-    char buffer[64];
-    int index = 0;
-    
-    while (1) {
-        char c = uart_receive_char();
-        
-        if (c == '\r' || c == '\n') {
-            if (index > 0) {
-                buffer[index] = '\0';
-                uart_send_string("\r\n");
-                uart_process_command(buffer);
-                index = 0;
-            }
-        } else if (c >= 32 && c < 127) { // Printable characters
-            if (index < 63) {
-                buffer[index++] = c;
-                // Echo character
-                volatile uint32_t *USART0_DATA = (uint32_t*)0x4001100C;
-                *USART0_DATA = c;
-            }
-        } else if (c == 8 || c == 127) { // Backspace
-            if (index > 0) {
-                index--;
-                // Send backspace
-                volatile uint32_t *USART0_DATA = (uint32_t*)0x4001100C;
-                *USART0_DATA = 8;
-                *USART0_DATA = ' ';
-                *USART0_DATA = 8;
-            }
-        }
-    }
 }

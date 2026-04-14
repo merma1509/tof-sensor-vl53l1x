@@ -21,7 +21,7 @@ void SystemInit(void) {
     // Configure PLL for 48MHz
     *RCU_CTL &= ~(0x1F << 13); // Clear PLLMF
     *RCU_CTL |= (9 << 13);     // PLLMF = 9 (48MHz)
-    *RCU_CTL |= (1 << 13);    // PLLMFEN
+    *RCU_CTL |= (1 << 13);     // PLLMFEN
     
     // Enable PLL
     *RCU_CTL |= (1 << 24); // PLLEN
@@ -37,7 +37,7 @@ void SystemInit(void) {
     while ((*RCU_CTL & 0x3) != 0x2);
 }
 
-/* Simple delay function */
+/* Delay function */
 void delay_ms(uint32_t ms) {
     volatile uint32_t count = ms * 48000; // Approximate for 48MHz
     while (count--) {
@@ -132,7 +132,10 @@ int main(void) {
             uint8_t distance_low = i2c_read_register(0x097); // VL53L1X_RESULT_DISTANCE_LOW
             uint16_t distance = (distance_high << 8) | distance_low;
             
-            uart_send_distance(distance);
+            // Apply filter
+            uint16_t filtered_distance = distance; // No filter for now
+            
+            uart_send_distance(filtered_distance);
             // Clear interrupt using I2C
             i2c_write_register(0x011, 0x01); // VL53L1X_SYSTEM_INTERRUPT_CLEAR
         }

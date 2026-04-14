@@ -150,7 +150,7 @@ typedef enum IRQn
 } IRQn_Type;
 
 /* includes */
-#include "core_cm23.h"
+#include "../GD32E23Firmware/CMSIS/core_cm23.h"
 #include "system_gd32e23x.h"
 #include <stdint.h>
 
@@ -204,7 +204,7 @@ typedef enum {ERROR = 0, SUCCESS = !ERROR} ErrStatus;
 #define OB_BASE               ((uint32_t)0x1FFFF800U)       /*!< OB base address                  */
 #define DBG_BASE              ((uint32_t)0x40015800U)       /*!< DBG base address                 */
 
-#include "gd32e23x_libopt.h"
+// #include "gd32e23x_libopt.h"  // File not found - commented out
 
 #ifdef __cplusplus
 }
