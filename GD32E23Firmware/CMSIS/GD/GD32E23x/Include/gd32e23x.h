@@ -150,21 +150,36 @@ typedef enum IRQn
 } IRQn_Type;
 
 /* includes */
-#include "../GD32E23Firmware/CMSIS/core_cm23.h"
-#include "system_gd32e23x.h"
 #include <stdint.h>
+#ifdef __clang__
+/* For Clang IDE lint - stub definitions only, real headers used for build */
+#else
+/* For GCC/ARM compiler - use real CMSIS headers */
+#include "../../../core_cm23.h"
+#include "system_gd32e23x.h"
+#endif
 
 /* enum definitions */
 typedef enum {DISABLE = 0, ENABLE = !DISABLE} EventStatus, ControlStatus;
 typedef enum {RESET = 0, SET = !RESET} FlagStatus;
-typedef enum {ERROR = 0, SUCCESS = !ERROR} ErrStatus;
+#ifndef ERROR
+#define ERROR 0
+#endif
+#ifndef SUCCESS  
+#define SUCCESS 1
+#endif
+typedef enum {ErrERROR = 0, ErrSUCCESS = !ErrERROR} ErrStatus;
 
 /* bit operations */
 #define REG32(addr)                  (*(volatile uint32_t *)(uint32_t)(addr))
 #define REG16(addr)                  (*(volatile uint16_t *)(uint32_t)(addr))
 #define REG8(addr)                   (*(volatile uint8_t *)(uint32_t)(addr))
+#ifndef BIT
 #define BIT(x)                       ((uint32_t)((uint32_t)0x01U<<(x)))
+#endif
+#ifndef BITS
 #define BITS(start, end)             ((0xFFFFFFFFUL << (start)) & (0xFFFFFFFFUL >> (31U - (uint32_t)(end))))
+#endif
 #define GET_BITS(regval, start, end) (((regval) & BITS((start),(end))) >> (start))
 
 /* main flash and SRAM memory map */

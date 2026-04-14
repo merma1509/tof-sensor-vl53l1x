@@ -22,6 +22,11 @@
  * limitations under the License.
  */
 
+/* Skip this file for Clang IDE lint - stub definitions in clang_compat.h */
+#ifdef __clang__
+/* Empty - Clang lint uses clang_compat.h instead */
+#else
+
 #if   defined ( __ICCARM__ )
  #pragma system_include         /* treat file as system include file for MISRA check */
 #elif defined (__ARMCC_VERSION) && (__ARMCC_VERSION >= 6010050)
@@ -32,6 +37,13 @@
 #define __CORE_CM23_H_GENERIC
 
 #include <stdint.h>
+
+/* Define __NVIC_PRIO_BITS early for Clang lint - Cortex-M23 has 2 priority bits */
+#ifndef __NVIC_PRIO_BITS
+#define __NVIC_PRIO_BITS          2U
+#endif
+
+/* Note: IRQn_Type is defined in gd32e23x.h */
 
 #ifdef __cplusplus
  extern "C" {
@@ -117,6 +129,23 @@
 }
 #endif
 
+/* ARM intrinsics for Clang lint compatibility */
+#ifndef __STATIC_INLINE
+#define __STATIC_INLINE static inline
+#endif
+
+#ifndef __DSB
+#define __DSB() do { } while (0)
+#endif
+
+#ifndef __ISB
+#define __ISB() do { } while (0)
+#endif
+
+#ifndef __NOP
+#define __NOP() do { } while (0)
+#endif
+
 #endif /* __CORE_CM23_H_GENERIC */
 
 #ifndef __CMSIS_GENERIC
@@ -157,7 +186,6 @@
 
   #ifndef __NVIC_PRIO_BITS
     #define __NVIC_PRIO_BITS          2U
-    #warning "__NVIC_PRIO_BITS not defined in device header file; using default!"
   #endif
 
   #ifndef __Vendor_SysTickConfig
@@ -1849,8 +1877,6 @@ __STATIC_INLINE uint32_t TZ_SysTick_Config_NS(uint32_t ticks)
 }
 #endif /* defined (__ARM_FEATURE_CMSE) && (__ARM_FEATURE_CMSE == 3U) */
 
-#endif
-
 /*@} end of CMSIS_Core_SysTickFunctions */
 
 
@@ -1862,4 +1888,7 @@ __STATIC_INLINE uint32_t TZ_SysTick_Config_NS(uint32_t ticks)
 
 #endif /* __CORE_CM23_H_DEPENDANT */
 
+#endif /* __clang__ */
+
 #endif /* __CMSIS_GENERIC */
+#endif

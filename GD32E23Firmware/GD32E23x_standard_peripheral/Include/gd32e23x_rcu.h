@@ -35,7 +35,9 @@ OF SUCH DAMAGE.
 #ifndef GD32E23X_RCU_H
 #define GD32E23X_RCU_H
 
-#include "gd32e23x.h"
+#ifndef CLANG_COMPAT_H
+#include "../../CMSIS/GD/GD32E23x/Include/gd32e23x.h"
+#endif
 
 /* RCU definitions */
 #define RCU                         RCU_BASE

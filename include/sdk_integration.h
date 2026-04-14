@@ -9,11 +9,17 @@
 #include <stdint.h>
 
 // Include GD32E230 SDK
+#ifdef __clang__
+/* Use compatibility header for Clang IDE lint - provides all needed definitions */
+#include "clang_compat.h"
+#else
+/* GCC/ARM compiler - use real SDK headers */
 #include "../GD32E23Firmware/CMSIS/GD/GD32E23x/Include/gd32e23x.h"
 #include "../GD32E23Firmware/GD32E23x_standard_peripheral/Include/gd32e23x_i2c.h"
 #include "../GD32E23Firmware/GD32E23x_standard_peripheral/Include/gd32e23x_usart.h"
 #include "../GD32E23Firmware/GD32E23x_standard_peripheral/Include/gd32e23x_gpio.h"
 #include "../GD32E23Firmware/GD32E23x_standard_peripheral/Include/gd32e23x_rcu.h"
+#endif
 
 // Include VL53L1X API
 #include "../API/core/VL53L1X_api.h"

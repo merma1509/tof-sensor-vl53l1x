@@ -35,7 +35,17 @@ OF SUCH DAMAGE.
 #ifndef GD32E23X_I2C_H
 #define GD32E23X_I2C_H
 
-#include "gd32e23x.h"
+/* Include standard types for Clang lint compatibility */
+#ifndef __UINT32_TYPE__
+typedef unsigned int uint32_t;
+typedef unsigned short uint16_t;
+typedef unsigned char uint8_t;
+#define __IO volatile
+#endif
+
+#ifndef CLANG_COMPAT_H
+#include "../../CMSIS/GD/GD32E23x/Include/gd32e23x.h"
+#endif
 
 /* I2Cx(x=0,1) definitions */
 #define I2C0                          I2C_BASE                          /*!< I2C0 base address */

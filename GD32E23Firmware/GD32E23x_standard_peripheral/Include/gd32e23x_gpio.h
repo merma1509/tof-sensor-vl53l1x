@@ -35,7 +35,9 @@ OF SUCH DAMAGE.
 #ifndef GD32E23X_GPIO_H
 #define GD32E23X_GPIO_H
 
-#include "gd32e23x.h"
+#ifndef CLANG_COMPAT_H
+#include "../../CMSIS/GD/GD32E23x/Include/gd32e23x.h"
+#endif
 
 /* GPIOx(x=A,B,C,F) definitions */
 #define GPIOA                      (GPIO_BASE + 0x00000000U)
