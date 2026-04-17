@@ -1,0 +1,173 @@
+/**
+ * @file  i2c_driver.c
+ * @brief I2C driver for GD32E230 with VL53L1 support
+ */
+
+#include "../include/i2c_driver.h"
+
+/* VL53L1 XSHUT control on PB1 - GPIOB bit 1 */
+#define XSHUT_PORT      ((volatile uint32_t*)0x48000400)  // GPIOB_BASE
+#define XSHUT_PIN       (1 << 1)  // PB1
+
+/* Initialize XSHUT pin (PB1) as output */
+static void xshut_init(void) {
+    // Enable GPIOB clock
+    volatile uint32_t *RCU_AHBEN = (uint32_t*)0x40021014;
+    *RCU_AHBEN |= (1 << 1);  // GPIOBEN bit 1
+    
+    // Configure PB1 as push-pull output
+    // GPIOB_CTL0 register: PB1 = bits 4-7
+    volatile uint32_t *GPIO_CTL0 = (volatile uint32_t*)0x48000400;
+    *GPIO_CTL0 &= ~(0xF << 4);  // Clear PB1
+    *GPIO_CTL0 |= (0x3 << 4);   // Output push-pull, 50MHz
+    
+    // XSHUT active low - set high to enable sensor
+    volatile uint32_t *GPIO_BOP = (volatile uint32_t*)0x48000410;
+    *GPIO_BOP = XSHUT_PIN;  // Set PB1 high
+}
+
+/* Toggle XSHUT to reset VL53L1 */
+void vl53l1_reset(void) {
+    volatile uint32_t *GPIO_BOP = (volatile uint32_t*)0x48000410;
+    volatile uint32_t *GPIO_BC = (volatile uint32_t*)0x48000414;
+    
+    // XSHUT low (reset)
+    *GPIO_BC = XSHUT_PIN;
+    delay_ms(10);
+    
+    // XSHUT high (enable) - wait for boot (1.2ms max per datasheet)
+    *GPIO_BOP = XSHUT_PIN;
+    delay_ms(2);
+}
+
+/* I2C implementation for GD32E230 */
+void i2c_init(void) {
+    // Configure I2C pins PA6(SCL), PA7(SDA)
+    volatile uint32_t *RCU_AHBEN = (uint32_t*)0x40021014;
+    *RCU_AHBEN |= (1 << 0); // GPIOA enable 
+    *RCU_AHBEN |= (1 << 1); // GPIOB enable for XSHUT
+    
+    // Configure PA6 and PA7 as alternate function open-drain
+    // GPIOA_CTL0 register: PA6 = bits 24-27, PA7 = bits 28-31
+    volatile uint32_t *GPIO_CTL0 = (uint32_t*)0x48000000;
+    *GPIO_CTL0 &= ~((0xF << 24) | (0xF << 28)); // Clear PA6, PA7
+    *GPIO_CTL0 |= (0xC << 24) | (0xC << 28); // AF output, open-drain, 50MHz
+    
+    // Enable pull-up for PA6, PA7
+    // GPIOA_PUD register: PA6 = bits 12-13, PA7 = bits 14-15
+    volatile uint32_t *GPIO_PUD = (uint32_t*)0x4800000C;
+    *GPIO_PUD &= ~((0x3 << 12) | (0x3 << 14)); // Clear PA6, PA7
+    *GPIO_PUD |= (0x1 << 12) | (0x1 << 14);   // Pull-up
+    
+    // Initialize XSHUT control
+    xshut_init();
+    
+    // Perform hardware reset of VL53L1
+    vl53l1_reset();
+    
+    // Enable I2C0 clock
+    volatile uint32_t *RCU_APB1EN = (uint32_t*)0x4002101C;
+    *RCU_APB1EN |= (1 << 21); // I2C0 clock enable
+    
+    // Reset I2C0
+    volatile uint32_t *I2C0_CTL0 = (uint32_t*)0x40005400;
+    *I2C0_CTL0 &= ~(1 << 0); // Disable I2C
+    *I2C0_CTL0 |= (1 << 0);  // Enable I2C
+    
+    // Configure I2C timing for 100kHz at 48MHz
+    volatile uint32_t *I2C0_CTL1 = (uint32_t*)0x40005404;
+    *I2C0_CTL1 &= ~0x0F; // Clear clock bits
+    *I2C0_CTL1 |= 0x0B;  // 100kHz timing
+    
+    // Set slave address
+    volatile uint32_t *I2C0_SADDR0 = (uint32_t*)0x4000541C;
+    *I2C0_SADDR0 = (VL53L1_DEVICE_ADDR << 1);
+}
+
+uint8_t i2c_write_register(uint16_t reg, uint8_t data) {
+    volatile uint32_t *I2C0_CTL0 = (uint32_t*)0x40005400;
+    volatile uint32_t *I2C0_STAT0 = (uint32_t*)0x40005410;
+    volatile uint32_t *I2C0_DATA = (uint32_t*)0x40005418;
+    
+    // Wait for I2C to be ready
+    while (*I2C0_STAT0 & (1 << 1)); // Wait for BUSY=0
+    
+    // Send start condition
+    *I2C0_CTL0 |= (1 << 8); // START=1
+    
+    // Wait for start condition generated
+    while (!(*I2C0_STAT0 & (1 << 5))); // Wait for SBSEND=1
+    
+    // Send device address (write)
+    *I2C0_DATA = (VL53L1_DEVICE_ADDR << 1);
+    while (!(*I2C0_STAT0 & (1 << 1))); // Wait for ADDSEND=1
+    
+    // Clear ADDSEND flag
+    *I2C0_STAT0 = (1 << 3);
+    
+    // Send register address (16-bit - high byte first)
+    *I2C0_DATA = (reg >> 8) & 0xFF;
+    while (!(*I2C0_STAT0 & (1 << 7))); // Wait for BTC=1
+    
+    *I2C0_DATA = reg & 0xFF;
+    while (!(*I2C0_STAT0 & (1 << 7))); // Wait for BTC=1
+    
+    // Send data
+    *I2C0_DATA = data;
+    while (!(*I2C0_STAT0 & (1 << 7))); // Wait for BTC=1
+    
+    // Send stop condition
+    *I2C0_CTL0 |= (1 << 9); // STOP=1
+    
+    return 0; // Success
+}
+
+uint8_t i2c_read_register(uint16_t reg) {
+    volatile uint32_t *I2C0_CTL0 = (uint32_t*)0x40005400;
+    volatile uint32_t *I2C0_STAT0 = (uint32_t*)0x40005410;
+    volatile uint32_t *I2C0_DATA = (uint32_t*)0x40005418;
+    uint8_t data;
+    
+    // Wait for I2C to be ready
+    while (*I2C0_STAT0 & (1 << 1)); // Wait for BUSY=0
+    
+    // Send start condition for write
+    *I2C0_CTL0 |= (1 << 8); // START=1
+    while (!(*I2C0_STAT0 & (1 << 5))); // Wait for SBSEND=1
+    
+    // Send device address (write)
+    *I2C0_DATA = (VL53L1_DEVICE_ADDR << 1);
+    while (!(*I2C0_STAT0 & (1 << 1))); // Wait for ADDSEND=1
+    *I2C0_STAT0 = (1 << 3); // Clear ADDSEND
+    
+    // Send register address (16-bit - high byte first)
+    *I2C0_DATA = (reg >> 8) & 0xFF;
+    while (!(*I2C0_STAT0 & (1 << 7))); // Wait for BTC=1
+    
+    *I2C0_DATA = reg & 0xFF;
+    while (!(*I2C0_STAT0 & (1 << 7))); // Wait for BTC=1
+    
+    // Send restart condition for read
+    *I2C0_CTL0 |= (1 << 8); // START=1
+    while (!(*I2C0_STAT0 & (1 << 5))); // Wait for SBSEND=1
+    
+    // Send device address (read)
+    *I2C0_DATA = (VL53L1_DEVICE_ADDR << 1) | 1;
+    while (!(*I2C0_STAT0 & (1 << 1))); // Wait for ADDSEND=1
+    *I2C0_STAT0 = (1 << 3); // Clear ADDSEND
+    
+    // Disable acknowledge for last byte
+    *I2C0_CTL0 &= ~(1 << 10); // ACKEN=0
+    
+    // Wait for data received
+    while (!(*I2C0_STAT0 & (1 << 6))); // Wait for RBNE=1
+    data = *I2C0_DATA;
+    
+    // Send stop condition
+    *I2C0_CTL0 |= (1 << 9); // STOP=1
+    
+    // Re-enable acknowledge
+    *I2C0_CTL0 |= (1 << 10); // ACKEN=1
+    
+    return data;
+}
