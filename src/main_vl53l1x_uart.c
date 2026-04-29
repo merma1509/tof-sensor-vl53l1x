@@ -1,6 +1,6 @@
 /**
- * @file  main_vl53l1x_uart.c
- * @brief Main application with UART command interface for VL53L1X
+ * @file  main_vl53l1_uart.c
+ * @brief Main application with UART command interface for VL53L1
  */
 
 #include "../include/uart_commands.h"
@@ -52,9 +52,9 @@ void delay_ms(uint32_t ms) {
     }
 }
 
-/* Test function for VL53L1X */
-void test_vl53l1x_functionality(void) {
-    uart_send_string("\r\n=== VL53L1X Functionality Test ===\r\n");
+/* Test function for VL53L1 */
+void test_vl53l1_functionality(void) {
+    uart_send_string("\r\n=== VL53L1 Functionality Test ===\r\n");
     
     // Test 1: Calibration
     uart_send_string("Test 1: Calibration...\r\n");
@@ -121,25 +121,35 @@ int main(void) {
     // Initialize UART
     uart_init();
     
+    // Small delay for UART to stabilize
+    delay_ms(100);
+    
+    // Test UART immediately - send 'X' repeatedly to verify
+    for (int i = 0; i < 5; i++) {
+        uart_send_string("X");
+        delay_ms(50);
+    }
+    uart_send_string("\r\n");
+    
     // Initialize filter
     filter_init(&distance_filter);
     
     // Show welcome message
-    uart_send_string("\r\nVL53L1X GD32E230 UART Interface\r\n");
+    uart_send_string("\r\nVL53L1 GD32E230 UART Interface\r\n");
     uart_send_string("Version 1.1 - With Combined Filter\r\n");
     
     // Run automated test sequence
-    test_vl53l1x_functionality();
+    test_vl53l1_functionality();
     
     // Main loop for Hardware Reading
     while (1) {
         // Check if measurement is ready using I2C
-        uint8_t status = i2c_read_register(0x013); // VL53L1X_GPIO_HV_MUX_ACTIVE
+        uint8_t status = i2c_read_register(0x013); // VL53L1_GPIO_HV_MUX_ACTIVE
         uint8_t data_ready = (status & 0x01) ? 1 : 0;   // Check data ready bit
         if (data_ready) {
-            // Read 16-bit distance from VL53L1X registers
-            uint8_t distance_high = i2c_read_register(0x096); // VL53L1X_RESULT_DISTANCE_HIGH
-            uint8_t distance_low = i2c_read_register(0x097); // VL53L1X_RESULT_DISTANCE_LOW
+            // Read 16-bit distance from VL53L1 registers
+            uint8_t distance_high = i2c_read_register(0x096); // VL53L1_RESULT_DISTANCE_HIGH
+            uint8_t distance_low = i2c_read_register(0x097); // VL53L1_RESULT_DISTANCE_LOW
             uint16_t distance = (distance_high << 8) | distance_low;
             
             // Apply filter if enabled (compile-time and runtime)
@@ -156,7 +166,7 @@ int main(void) {
             
             uart_send_distance(output_distance); // Send filtered distance to PC via UART
             // Clear interrupt using I2C
-            i2c_write_register(0x011, 0x01); // VL53L1X_SYSTEM_INTERRUPT_CLEAR
+            i2c_write_register(0x011, 0x01); // VL53L1_SYSTEM_INTERRUPT_CLEAR
         }
         
         // Process UART commands

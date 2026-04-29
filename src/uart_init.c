@@ -16,13 +16,14 @@ void uart_init(void) {
     *RCU_APB2EN |= (1 << 14); // USART0 enable
     
     // Configure PA9 (TX) and PA10 (RX) as alternate function
-    volatile uint32_t *GPIO_CTL0 = (uint32_t*)0x48000000;
-    // PA9 - AF1 (USART0_TX)
-    *GPIO_CTL0 &= ~(0xF << 4); // Clear PA9
-    *GPIO_CTL0 |= (0x1 << 4);  // AF1
-    // PA10 - AF1 (USART0_RX)
-    *GPIO_CTL0 &= ~(0xF << 8); // Clear PA10
-    *GPIO_CTL0 |= (0x1 << 8);  // AF1
+    // NOTE: PA9 and PA10 are in GPIO_CTL1 (pins 8-15), NOT GPIO_CTL0!
+    volatile uint32_t *GPIO_CTL1 = (uint32_t*)0x48000004;
+    // PA9 - AF1 (USART0_TX) - bits 4-7 in CTL1 (pin 9 = 8+1)
+    *GPIO_CTL1 &= ~(0xF << 4); // Clear PA9
+    *GPIO_CTL1 |= (0xB << 4);  // AF output push-pull 50MHz (0xB)
+    // PA10 - AF1 (USART0_RX) - bits 8-11 in CTL1 (pin 10 = 8+2)
+    *GPIO_CTL1 &= ~(0xF << 8); // Clear PA10
+    *GPIO_CTL1 |= (0xB << 8);  // AF output push-pull 50MHz (0xB)
     
     // Configure USART0 for 115200 baud at 48MHz
     volatile uint32_t *USART0_STAT = (uint32_t*)0x40013800;

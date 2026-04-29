@@ -1,6 +1,6 @@
 /**
  * @file  sdk_integration.h
- * @brief SDK integration header for VL53L1X and GD32E230
+ * @brief SDK integration header for VL53L1 and GD32E230
  */
 
 #ifndef SDK_INTEGRATION_H
@@ -21,9 +21,21 @@
 #include "../GD32E23Firmware/GD32E23x_standard_peripheral/Include/gd32e23x_rcu.h"
 #endif
 
-// Include VL53L1X API
+// Include VL53L1X API (compatible with VL53L1 for basic functions)
 #include "../API/core/VL53L1X_api.h"
 #include "../API/core/VL53L1X_calibration.h"
+
+// Compatibility defines for VL53L1
+#define VL53L1_I2C_ADDRESS      0x52
+#define VL53L1_ERROR_NONE       0
+#define VL53L1_ERROR           int8_t
+
+// Map VL53L1 API calls to VL53L1X API (they are compatible)
+#define VL53L1_SensorInit       VL53L1X_SensorInit
+#define VL53L1_GetDistance      VL53L1X_GetDistance
+#define VL53L1_SetDistanceMode  VL53L1X_SetDistanceMode
+#define VL53L1_SetTimingBudgetInMs VL53L1X_SetTimingBudgetInMs
+#define VL53L1_StartTemperatureUpdate VL53L1X_StartTemperatureUpdate
 
 // SDK integration constants
 #define SDK_SYSTEM_CLOCK_48MHZ     48000000
@@ -32,7 +44,7 @@
 
 // SDK integration structures
 typedef struct {
-    uint8_t vl53l1x_initialized;
+    uint8_t vl53l1_initialized;
     uint8_t gd32_initialized;
     uint16_t current_distance;
     uint8_t current_mode;
@@ -43,11 +55,11 @@ typedef struct {
 uint8_t sdk_system_init(void);
 uint8_t sdk_i2c_init(void);
 uint8_t sdk_uart_init(void);
-uint8_t sdk_vl53l1x_init(void);
-uint8_t sdk_vl53l1x_get_distance(uint16_t *distance);
-uint8_t sdk_vl53l1x_set_mode(uint8_t mode);
-uint8_t sdk_vl53l1x_set_timing(uint32_t timing);
-uint8_t sdk_vl53l1x_calibrate(void);
+uint8_t sdk_vl53l1_init(void);
+uint8_t sdk_vl53l1_get_distance(uint16_t *distance);
+uint8_t sdk_vl53l1_set_mode(uint8_t mode);
+uint8_t sdk_vl53l1_set_timing(uint32_t timing);
+uint8_t sdk_vl53l1_calibrate(void);
 
 // Additional SDK functions
 uint8_t sdk_full_init(void);
