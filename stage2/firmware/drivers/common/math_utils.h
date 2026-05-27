@@ -25,6 +25,16 @@ extern "C" {
 char* int_to_string(int value, char* buffer, size_t buffer_size);
 
 /**
+ * @brief Convert float to string
+ * @param value Float value
+ * @param buffer Output buffer
+ * @param buffer_size Buffer size
+ * @param decimal_places Number of decimal places
+ * @return Pointer to buffer
+ */
+char* float_to_string(float value, char* buffer, size_t buffer_size, int decimal_places);
+
+/**
  * @brief Convert string to integer
  * @param str Input string
  * @param base Number base (10 for decimal, 16 for hex)

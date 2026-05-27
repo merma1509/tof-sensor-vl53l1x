@@ -112,6 +112,14 @@ void write_le16(uint8_t* buffer, uint16_t value);
  */
 void write_le32(uint8_t* buffer, uint32_t value);
 
+// Convenience aliases for test compatibility
+#define swap_uint16(value) swap_bytes16(value)
+#define swap_uint32(value) swap_bytes32(value)
+#define host_to_network_uint16(value) host_to_be16(value)
+#define host_to_network_uint32(value) host_to_be32(value)
+#define network_to_host_uint16(value) be16_to_host(value)
+#define network_to_host_uint32(value) be32_to_host(value)
+
 #ifdef __cplusplus
 }
 #endif

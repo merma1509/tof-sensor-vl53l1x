@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "../config/platform_config.h"
+#include "../drivers/common/debug_utils.h"
 
 /* Platform return codes */
 typedef enum {
@@ -82,22 +83,12 @@ extern const platform_interface_t mik32_platform_interface;
 #define PLATFORM_GET_TICK_MS()             platform_get_interface()->get_tick_ms()
 #define PLATFORM_GET_TICK_US()             platform_get_interface()->get_tick_us()
 
-/* Debug macros */
+/* Debug macros - using common utilities */
 #if DEBUG_ENABLED
-#define DEBUG_PRINT(fmt, ...) do { \
-    char debug_buf[128]; \
-    snprintf(debug_buf, sizeof(debug_buf), fmt, ##__VA_ARGS__); \
-    PLATFORM_UART_SEND_STR(debug_buf); \
-} while(0)
-#define DEBUG_PRINT_HEX(data, len) do { \
-    for(int i = 0; i < len; i++) { \
-        char hex_buf[8]; \
-        snprintf(hex_buf, sizeof(hex_buf), "%02X ", data[i]); \
-        PLATFORM_UART_SEND_STR(hex_buf); \
-    } \
-} while(0)
+#define DEBUG_PRINT(...) COMMON_DEBUG_PRINT(__VA_ARGS__)
+#define DEBUG_PRINT_HEX(data, len) debug_hex_dump(data, len, 0)
 #else
-#define DEBUG_PRINT(fmt, ...)
+#define DEBUG_PRINT(...)
 #define DEBUG_PRINT_HEX(data, len)
 #endif
 

@@ -78,6 +78,11 @@ bool verify_crc8(const uint8_t* data, size_t length, uint8_t expected_crc);
  */
 bool verify_crc16(const uint8_t* data, size_t length, uint16_t expected_crc);
 
+// Convenience aliases for test compatibility
+#define crc8_calculate(data, length) crc8(data, length)
+#define crc16_calculate(data, length) crc16(data, length)
+#define crc32_calculate(data, length) crc32(data, length)
+
 #ifdef __cplusplus
 }
 #endif

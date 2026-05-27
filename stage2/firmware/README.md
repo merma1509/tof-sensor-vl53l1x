@@ -138,6 +138,63 @@ make TARGET_PLATFORM=MIK32
 make clean
 ```
 
+### Flashing Firmware
+The Makefile provides multiple flashing options for each platform:
+
+#### GD32 Flashing Options
+```bash
+# Option 1: Using J-Link
+# Uncomment in Makefile: JLinkExe -device GD32E230 -if SWD -speed 4000 -autoconnect 1 -CommanderScript flash.jlink
+
+# Option 2: Using ST-Link and OpenOCD
+# Uncomment in Makefile: openocd -f interface/stlink.cfg -f target/gd32e23x.cfg -c "program build/vl53l1_tof_firmware.bin verify reset exit"
+
+# Option 3: Using pyOCD
+# Uncomment in Makefile: pyocd flash -t gd32e230 build/vl53l1_tof_firmware.bin
+```
+
+#### MIK32 Flashing Options
+```bash
+# Option 1: Using OpenOCD with MIK32 configuration
+# Uncomment in Makefile: openocd -f interface/jlink.cfg -f target/mik32.cfg -c "program build/vl53l1_tof_firmware.bin verify reset exit"
+
+# Option 2: Using custom MIK32 programmer
+# Uncomment in Makefile: mik32-programmer --flash build/vl53l1_tof_firmware.bin
+
+# Option 3: Using RISC-V GDB with OpenOCD
+# Uncomment in Makefile: riscv-none-elf-gdb -ex "target remote localhost:3333" -ex "load build/vl53l1_tof_firmware.elf" -ex "monitor reset" -ex "continue"
+```
+
+#### Flashing Process
+```bash
+# 1. Build the firmware
+make TARGET_PLATFORM=GD32    # or MIK32
+
+# 2. Uncomment your preferred flashing method in the Makefile flash target
+
+# 3. Flash the firmware
+make flash
+```
+
+### Debugging
+```bash
+# Start GDB debugging session
+make debug
+
+# This will launch the appropriate GDB for your platform:
+# - arm-none-eabi-gdb for GD32
+# - riscv-none-elf-gdb for MIK32
+```
+
+### Additional Commands
+```bash
+# Show build configuration
+make info
+
+# Show all available commands
+make help
+```
+
 ## Command Interface
 
 The firmware provides a UART command interface:

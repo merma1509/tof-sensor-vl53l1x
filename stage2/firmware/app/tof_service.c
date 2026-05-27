@@ -6,28 +6,9 @@
 #include "tof_service.h"
 #include "../drivers/vl53l1/VL53L1X_api.h"
 #include "../platform/platform.h"
+#include "../drivers/common/string_utils.h"
 
-// Minimal library functions for bare-metal environment
-static int snprintf(char *str, size_t size, const char *format, ...) {
-    (void)format; // Suppress unused parameter warning
-    str[0] = '\0';
-    return 0;
-}
-
-static int rand(void) {
-    static unsigned int seed = 12345;
-    seed = seed * 1103515245 + 12345;
-    return (seed >> 16) & 0x7FFF;
-}
-
-static void strcpy(char *dest, const char *src) {
-    while ((*dest++ = *src++));
-}
-
-static void strcat(char *dest, const char *src) {
-    while (*dest) dest++;
-    while ((*dest++ = *src++));
-}
+// Using common utilities for library functions
 
 /* TOF service state */
 static tof_state_t current_state = TOF_STATE_IDLE;
@@ -143,6 +124,10 @@ int tof_service_set_mode(tof_mode_t mode) {
     return 0;
 }
 
+tof_mode_t tof_service_get_mode(void) {
+    return current_mode;
+}
+
 int tof_service_get_distance(uint16_t *distance_mm) {
     if (current_state != TOF_STATE_RANGING || !ranging_enabled) {
         return -1;
@@ -245,15 +230,15 @@ int tof_service_get_status(char *status_buffer, size_t buffer_size) {
     
     // Simple status string formatting
     char temp_buffer[128];
-    // Using simple string concatenation instead of snprintf for bare-metal
-    strcpy(status_buffer, "State: ");
-    strcat(status_buffer, state_str);
-    strcat(status_buffer, ", Mode: ");
-    strcat(status_buffer, mode_str);
+    // Using safe string functions from common utilities
+    safe_strcpy(status_buffer, "State: ", buffer_size);
+    safe_strcat(status_buffer, state_str, buffer_size);
+    safe_strcat(status_buffer, ", Mode: ", buffer_size);
+    safe_strcat(status_buffer, mode_str, buffer_size);
     
 #if FILTER_ENABLED
-    strcat(status_buffer, ", Filter: ");
-    strcat(status_buffer, filter_enabled ? "ON" : "OFF");
+    safe_strcat(status_buffer, ", Filter: ", buffer_size);
+    safe_strcat(status_buffer, filter_enabled ? "ON" : "OFF", buffer_size);
 #endif
     
     return 0;

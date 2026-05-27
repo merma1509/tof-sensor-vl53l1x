@@ -4,20 +4,7 @@
  */
 
 #include "../platform.h"
-
-// Minimal string and memory functions for bare-metal environment
-static size_t strlen(const char *str) {
-    size_t len = 0;
-    while (str[len]) len++;
-    return len;
-}
-
-static void* memcpy(void *dest, const void *src, size_t n) {
-    uint8_t *d = (uint8_t*)dest;
-    const uint8_t *s = (const uint8_t*)src;
-    while (n--) *d++ = *s++;
-    return dest;
-}
+#include "../../drivers/common/string_utils.h"
 
 /* GD32 Register definitions */
 #define RCU_CTL         (*((volatile uint32_t*)0x40021000))
@@ -138,7 +125,7 @@ static platform_status_t gd32_uart_receive(uint8_t *data, size_t len, uint32_t t
 }
 
 static platform_status_t gd32_uart_send_string(const char *str) {
-    return gd32_uart_send((const uint8_t*)str, strlen(str));
+    return gd32_uart_send((const uint8_t*)str, safe_strlen(str));
 }
 
 /* I2C implementation */
@@ -246,7 +233,7 @@ static platform_status_t gd32_i2c_write_reg(uint8_t addr, uint16_t reg, const ui
     uint8_t buffer[2 + len];
     buffer[0] = (reg >> 8) & 0xFF;
     buffer[1] = reg & 0xFF;
-    memcpy(&buffer[2], data, len);
+    safe_memcpy(&buffer[2], data, len);
     return gd32_i2c_write(addr, buffer, 2 + len);
 }
 

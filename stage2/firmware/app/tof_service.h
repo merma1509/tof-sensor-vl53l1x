@@ -66,6 +66,7 @@ int tof_service_deinit(void);
 int tof_service_start_ranging(void);
 int tof_service_stop_ranging(void);
 int tof_service_set_mode(tof_mode_t mode);
+tof_mode_t tof_service_get_mode(void);
 int tof_service_get_distance(uint16_t *distance_mm);
 int tof_service_get_measurement(tof_measurement_t *measurement);
 tof_state_t tof_service_get_state(void);

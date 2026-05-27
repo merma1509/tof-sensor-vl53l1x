@@ -6,6 +6,7 @@
 #include "command_parser.h"
 #include "tof_service.h"
 #include "../platform/platform.h"
+#include "../drivers/common/string_utils.h"
 
 // Standard definitions for bare-metal environment
 #ifndef NULL
@@ -16,12 +17,7 @@
 #define SIZE_MAX ((size_t)-1)
 #endif
 
-// Minimal snprintf for bare-metal environment
-static int snprintf(char *str, size_t size, const char *format, ...) {
-    (void)format; // Suppress unused parameter warning
-    str[0] = '\0';
-    return 0;
-}
+// Using common utilities for library functions
 
 // Minimal string functions for bare-metal environment
 static int strcmp(const char *s1, const char *s2) {
@@ -40,11 +36,7 @@ static int strncmp(const char *s1, const char *s2, size_t n) {
     return n == SIZE_MAX ? 0 : *(const unsigned char*)s1 - *(const unsigned char*)s2;
 }
 
-static size_t strlen(const char *s) {
-    size_t len = 0;
-    while (s[len]) len++;
-    return len;
-}
+// Using safe_strlen from common utilities
 
 /* Command processing functions */
 static int cmd_start(const char *args);
@@ -89,7 +81,7 @@ int command_parser_deinit(void) {
 }
 
 int command_parser_process(const char *command) {
-    if (!command || strlen(command) == 0) {
+    if (!command || safe_strlen(command) == 0) {
         return CMD_PARSER_ERROR;
     }
     
@@ -239,7 +231,7 @@ static int cmd_status(const char *args) {
 
 static int cmd_filter(const char *args) {
 #if FILTER_ENABLED
-    if (!args || strlen(args) == 0) {
+    if (!args || safe_strlen(args) == 0) {
         DEBUG_PRINT("Usage: FILTER ON|OFF|STATUS\r\n");
         return CMD_PARSER_INVALID_ARGS;
     }

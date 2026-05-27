@@ -6,14 +6,9 @@
  */
 
 #include "math_utils.h"
+#include "string_utils.h"
 
-// Simple string length implementation for internal use
-static size_t math_strlen(const char* str) {
-    if (!str) return 0;
-    size_t len = 0;
-    while (str[len] != '\0') len++;
-    return len;
-}
+// Using safe_strlen from common utilities
 
 char* int_to_string(int value, char* buffer, size_t buffer_size) {
     if (!buffer || buffer_size == 0) return buffer;
@@ -52,6 +47,44 @@ char* int_to_string(int value, char* buffer, size_t buffer_size) {
         buffer[i - 1 - j] = c;
     }
     
+    return buffer;
+}
+
+char* float_to_string(float value, char* buffer, size_t buffer_size, int decimal_places) {
+    if (!buffer || buffer_size == 0) return buffer;
+    
+    if (buffer_size < 2) {
+        buffer[0] = '\0';
+        return buffer;
+    }
+    
+    // Handle negative numbers
+    if (value < 0) {
+        buffer[0] = '-';
+        value = -value;
+        buffer++;
+        buffer_size--;
+    }
+    
+    // Convert integer part
+    int int_part = (int)value;
+    char* ptr = int_to_string(int_part, buffer, buffer_size);
+    
+    // Add decimal point if needed
+    if (decimal_places > 0 && ptr < buffer + buffer_size - 1) {
+        *ptr++ = '.';
+        
+        // Convert fractional part
+        float frac_part = value - int_part;
+        for (int i = 0; i < decimal_places && ptr < buffer + buffer_size - 1; i++) {
+            frac_part *= 10;
+            int digit = (int)frac_part;
+            *ptr++ = '0' + digit;
+            frac_part -= digit;
+        }
+    }
+    
+    *ptr = '\0';
     return buffer;
 }
 
