@@ -156,11 +156,15 @@ static int test_platform_timing(void) {
 static int test_platform_macros(void) {
     debug_print("Testing platform macros...\n");
     
-    // Test that macros are defined and callable
-    TEST_ASSERT(PLATFORM_UART_INIT != NULL);
-    TEST_ASSERT(PLATFORM_I2C_INIT != NULL);
-    TEST_ASSERT(PLATFORM_GPIO_INIT != NULL);
-    TEST_ASSERT(PLATFORM_DELAY_MS != NULL);
+    // Test that platform interface is available
+    const platform_interface_t* interface = platform_get_interface();
+    TEST_ASSERT(interface != NULL);
+    
+    // Test that interface functions are available
+    TEST_ASSERT(interface->uart_init != NULL);
+    TEST_ASSERT(interface->i2c_init != NULL);
+    TEST_ASSERT(interface->gpio_init != NULL);
+    TEST_ASSERT(interface->delay_ms != NULL);
     
     // Test debug macros
     DEBUG_PRINT("Debug macro test\n");

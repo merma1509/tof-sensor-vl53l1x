@@ -30,9 +30,9 @@ int8_t VL53L1X_CalibrateOffset(uint16_t dev, uint16_t TargetDistInMm, int16_t *o
 	VL53L1X_ERROR status = 0;
 	uint16_t timeout_counter =0;
 
-	status |= VL53L1_WrWord(dev, ALGO__PART_TO_PART_RANGE_OFFSET_MM, 0x0);
-	status |= VL53L1_WrWord(dev, MM_CONFIG__INNER_OFFSET_MM, 0x0);
-	status |= VL53L1_WrWord(dev, MM_CONFIG__OUTER_OFFSET_MM, 0x0);
+	status |= VL53L1_WriteWord(dev, ALGO__PART_TO_PART_RANGE_OFFSET_MM, 0x0);
+	status |= VL53L1_WriteWord(dev, MM_CONFIG__INNER_OFFSET_MM, 0x0);
+	status |= VL53L1_WriteWord(dev, MM_CONFIG__OUTER_OFFSET_MM, 0x0);
 	status |= VL53L1X_StartRanging(dev);	/* Enable VL53L1X sensor */
 	for (i = 0; i < 50; i++) {
 		while (tmp == 0)
@@ -44,7 +44,7 @@ int8_t VL53L1X_CalibrateOffset(uint16_t dev, uint16_t TargetDistInMm, int16_t *o
 				status = (uint8_t)VL53L1X_ERROR_TIMEOUT;
 				return status;
 			}
-			status = VL53L1_WaitMs(dev, 1);
+			VL53L1_WaitMs(1);
 		}
 		tmp = 0;
 		timeout_counter=0;
@@ -56,7 +56,7 @@ int8_t VL53L1X_CalibrateOffset(uint16_t dev, uint16_t TargetDistInMm, int16_t *o
 	status |= VL53L1X_StopRanging(dev);
 	AverageDistance = AverageDistance / 50;
 	*offset = TargetDistInMm - AverageDistance;
-	status |= VL53L1_WrWord(dev, ALGO__PART_TO_PART_RANGE_OFFSET_MM, *offset*4);
+	status |= VL53L1_WriteWord(dev, ALGO__PART_TO_PART_RANGE_OFFSET_MM, *offset*4);
 	return status;
 }
 
@@ -73,7 +73,7 @@ int8_t VL53L1X_CalibrateXtalk(uint16_t dev, uint16_t TargetDistInMm, uint16_t *x
 	uint32_t calXtalk;
 	uint16_t timeout_counter =0;
 
-	status |= VL53L1_WrWord(dev, 0x0016,0);
+	status |= VL53L1_WriteWord(dev, 0x0016,0);
 	status |= VL53L1X_StartRanging(dev);
 	for (i = 0; i < 50; i++) {
 		while (tmp == 0)
@@ -85,7 +85,7 @@ int8_t VL53L1X_CalibrateXtalk(uint16_t dev, uint16_t TargetDistInMm, uint16_t *x
 				status = (uint8_t)VL53L1X_ERROR_TIMEOUT;
 				return status;
 			}
-			status = VL53L1_WaitMs(dev, 1);
+			VL53L1_WaitMs(1);
 		}
 		tmp = 0;
 		timeout_counter=0;
@@ -108,6 +108,6 @@ int8_t VL53L1X_CalibrateXtalk(uint16_t dev, uint16_t TargetDistInMm, uint16_t *x
 	if(calXtalk  > 0xffff)
 		calXtalk = 0xffff;
 	*xtalk = (uint16_t)((calXtalk*1000)>>9);
-	status |= VL53L1_WrWord(dev, 0x0016, (uint16_t)calXtalk);
+	status |= VL53L1_WriteWord(dev, 0x0016, (uint16_t)calXtalk);
 	return status;
 }

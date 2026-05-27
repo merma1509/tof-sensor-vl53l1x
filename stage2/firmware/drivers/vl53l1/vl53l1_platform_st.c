@@ -4,14 +4,7 @@
  */
 
 #include "vl53l1_platform.h"
-
-// Simple delay function
-void delay_ms(uint32_t ms) {
-    volatile uint32_t count = ms * 48000; // Approximate for 48MHz
-    while (count--) {
-        __asm("nop");
-    }
-}
+#include "../common/delay_utils.h"
 
 // Platform I2C write function
 int32_t VL53L1X_WriteMulti(uint16_t index, uint8_t *pdata, uint32_t count) {
@@ -30,7 +23,7 @@ int32_t VL53L1X_WriteMulti(uint16_t index, uint8_t *pdata, uint32_t count) {
     while (!(*I2C0_STAT0 & (1 << 5))); // Wait for SBSEND=1
     
     // Send device address (write)
-    *I2C0_DATA = (VL53L1X_I2C_ADDRESS << 1);
+    *I2C0_DATA = (VL53L1_I2C_ADDRESS << 1);
     while (!(*I2C0_STAT0 & (1 << 1))); // Wait for ADDSEND=1
     *I2C0_STAT0 = (1 << 3); // Clear ADDSEND
     
@@ -70,7 +63,7 @@ int32_t VL53L1X_ReadMulti(uint16_t index, uint8_t *pdata, uint32_t count) {
     while (!(*I2C0_STAT0 & (1 << 5))); // Wait for SBSEND=1
     
     // Send device address (write)
-    *I2C0_DATA = (VL53L1X_I2C_ADDRESS << 1);
+    *I2C0_DATA = (VL53L1_I2C_ADDRESS << 1);
     while (!(*I2C0_STAT0 & (1 << 1))); // Wait for ADDSEND=1
     *I2C0_STAT0 = (1 << 3); // Clear ADDSEND
     
@@ -85,7 +78,7 @@ int32_t VL53L1X_ReadMulti(uint16_t index, uint8_t *pdata, uint32_t count) {
     while (!(*I2C0_STAT0 & (1 << 5))); // Wait for SBSEND=1
     
     // Send device address (read)
-    *I2C0_DATA = (VL53L1X_I2C_ADDRESS << 1) | 0x01;
+    *I2C0_DATA = (VL53L1_I2C_ADDRESS << 1) | 0x01;
     while (!(*I2C0_STAT0 & (1 << 1))); // Wait for ADDSEND=1
     *I2C0_STAT0 = (1 << 3); // Clear ADDSEND
     

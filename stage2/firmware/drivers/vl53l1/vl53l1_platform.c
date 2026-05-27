@@ -15,9 +15,6 @@ static int snprintf(char *str, size_t size, const char *format, ...) {
     return 0;
 }
 
-/* VL53L1 I2C device address */
-#define VL53L1_I2C_ADDRESS    0x29
-
 /* VL53L1 platform I2C implementations */
 int VL53L1_WriteMulti(uint16_t dev, uint16_t index, uint8_t *pdata, uint32_t count) {
     (void)dev; // Device address is fixed for VL53L1

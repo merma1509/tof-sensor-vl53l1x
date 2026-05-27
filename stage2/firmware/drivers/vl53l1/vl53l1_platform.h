@@ -9,6 +9,9 @@
 #include <stdint.h>
 #include "../../platform/platform.h"
 
+/* VL53L1 I2C device address */
+#define VL53L1_I2C_ADDRESS    0x29
+
 /* VL53L1 platform interface - portable across MCUs */
 typedef struct {
     /* I2C communication */

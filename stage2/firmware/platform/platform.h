@@ -78,6 +78,10 @@ extern const platform_interface_t mik32_platform_interface;
 #define PLATFORM_I2C_WRITE_REG(addr, reg, data, len) platform_get_interface()->i2c_write_reg(addr, reg, data, len)
 #define PLATFORM_I2C_READ_REG(addr, reg, data, len) platform_get_interface()->i2c_read_reg(addr, reg, data, len)
 
+#define PLATFORM_GPIO_INIT(pin, mode)      platform_get_interface()->gpio_init(pin, mode)
+#define PLATFORM_GPIO_SET(pin, state)      platform_get_interface()->gpio_set(pin, state)
+#define PLATFORM_GPIO_GET(pin, state)      platform_get_interface()->gpio_get(pin, state)
+
 #define PLATFORM_DELAY_MS(ms)              platform_get_interface()->delay_ms(ms)
 #define PLATFORM_DELAY_US(us)              platform_get_interface()->delay_us(us)
 #define PLATFORM_GET_TICK_MS()             platform_get_interface()->get_tick_ms()

@@ -11,7 +11,6 @@
 #include "../drivers/common/debug_utils.h"
 #include "../drivers/common/crc_utils.h"
 #include "../drivers/common/endian_utils.h"
-#include <assert.h>
 
 // Test framework macros
 #define TEST_ASSERT(condition) \
