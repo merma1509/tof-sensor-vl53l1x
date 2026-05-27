@@ -1,0 +1,17 @@
+{
+  "name": "framework-mik32v2-sdk",
+  "version": "0.2.2",
+  "description": "Mikron MIK32V2 Firmware Library",
+  "keywords": [
+    "framework",
+    "sdk",
+    "risc-v",
+    "mikron"
+  ],
+  "license": "MIT",
+  "homepage": "http://mik32.ru",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MikronMIK32/framework-mik32v2-sdk.git"
+  }
+}
