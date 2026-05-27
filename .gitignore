@@ -1,2 +1,36 @@
-.vscode
+# IDE files
+.vscode/
+*.swp
+*.swo
+*~
+
+# Build artifacts
+build/
+*.o
+*.elf
+*.bin
+*.hex
+*.map
+
+# PlatformIO
+.pio/
+*.pio
+.pioenvs/
+.piolibdeps/
+.clang_complete
+.gcc-flags.json
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Test directories
 tests/
+
+# Firmware libraries
+/GD32E23Firmware/CMSIS/cmsis_compiler_original.h
