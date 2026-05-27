@@ -6,7 +6,6 @@
  */
 
 #include "../platform/platform.h"
-#include "../drivers/common/string_utils.h"
 #include "../drivers/common/debug_utils.h"
 
 // Test framework macros

@@ -4,20 +4,50 @@ TARGET_PLATFORM ?= GD32
 BUILD_DIR = build
 PROJECT_NAME = vl53l1_tof_firmware
 
+# ARM GCC Toolchain Detection
+# Check if arm-none-eabi-gcc is available
+ifeq ($(shell where arm-none-eabi-gcc 2>NUL),)
+    # GCC not in PATH, try common installation locations
+    ifeq ($(wildcard $(USERPROFILE)/.platformio/packages/toolchain-gccarmnoneeabi/bin/arm-none-eabi-gcc.exe),)
+        ifeq ($(wildcard C:/gcc-arm-none-eabi/bin/arm-none-eabi-gcc.exe),)
+            ifeq ($(wildcard C:/devkit/arm/bin/arm-none-eabi-gcc.exe),)
+                $(error ARM GCC toolchain not found. Please install ARM GCC or add it to PATH. Install options: 1) PlatformIO: pio install toolchain-gccarmnoneeabi 2) GNU ARM Embedded: https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads)
+            else
+                TOOLCHAIN_PREFIX := C:/devkit/arm/bin/arm-none-eabi-
+                export PATH := C:/devkit/arm/bin;$(PATH)
+                $(info Found ARM GCC at: C:/devkit/arm/bin)
+            endif
+        else
+            TOOLCHAIN_PREFIX := C:/gcc-arm-none-eabi/bin/arm-none-eabi-
+            export PATH := C:/gcc-arm-none-eabi/bin;$(PATH)
+            $(info Found ARM GCC at: C:/gcc-arm-none-eabi/bin)
+        endif
+    else
+        TOOLCHAIN_PREFIX := $(USERPROFILE)/.platformio/packages/toolchain-gccarmnoneeabi/bin/arm-none-eabi-
+        export PATH := $(USERPROFILE)/.platformio/packages/toolchain-gccarmnoneeabi/bin;$(PATH)
+        $(info Found ARM GCC at: $(USERPROFILE)/.platformio/packages/toolchain-gccarmnoneeabi/bin)
+    endif
+else
+    TOOLCHAIN_PREFIX := arm-none-eabi-
+    $(info Using ARM GCC from PATH)
+endif
+
 # Platform configuration
 ifeq ($(TARGET_PLATFORM), GD32)
     MCU = GD32E230
     ARCH = cortex-m23
-    TOOLCHAIN_PREFIX = arm-none-eabi-
+    # Set default TOOLCHAIN_PREFIX if not already detected
+    TOOLCHAIN_PREFIX ?= arm-none-eabi-
     PLATFORM_DIR = platform
     PLATFORM_SPECIFIC_DIR = platform/gd32
     LINKER_SCRIPT = $(PLATFORM_SPECIFIC_DIR)/gd32e230.ld
     CFLAGS = -mcpu=$(ARCH) -mthumb -mfloat-abi=soft -Wall -Wextra -Os -g -ffunction-sections -fdata-sections -std=c99
-    LDFLAGS = -mcpu=$(ARCH) -mthumb -mfloat-abi=soft -Wl,--gc-sections -T$(LINKER_SCRIPT)
+    LDFLAGS = -mcpu=$(ARCH) -mthumb -mfloat-abi=soft -Wl,--gc-sections -T$(LINKER_SCRIPT) -nostartfiles
 else ifeq ($(TARGET_PLATFORM), MIK32)
     MCU = MIK32
     ARCH = rv32imc
-    TOOLCHAIN_PREFIX = riscv-none-embed-
+    # Set default TOOLCHAIN_PREFIX if not already detected
+    TOOLCHAIN_PREFIX ?= riscv-none-embed-
     PLATFORM_DIR = platform/mik32
     LINKER_SCRIPT = $(PLATFORM_DIR)/mik32_flash.ld
     CFLAGS = -march=$(ARCH) -mabi=ilp32 -Wall -Wextra -Os -g -ffunction-sections -fdata-sections -std=c99
