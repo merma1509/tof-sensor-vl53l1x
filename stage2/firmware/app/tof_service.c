@@ -228,8 +228,6 @@ int tof_service_get_status(char *status_buffer, size_t buffer_size) {
             break;
     }
     
-    // Simple status string formatting
-    char temp_buffer[128];
     // Using safe string functions from common utilities
     safe_strcpy(status_buffer, "State: ", buffer_size);
     safe_strcat(status_buffer, state_str, buffer_size);

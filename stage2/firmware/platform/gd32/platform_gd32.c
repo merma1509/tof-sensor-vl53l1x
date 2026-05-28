@@ -71,6 +71,7 @@ static void gd32_system_clock_init(void) {
 
 /* UART implementation */
 static platform_status_t gd32_uart_init(uint32_t baudrate) {
+    (void)baudrate; // Mark as intentionally unused
     // Enable GPIOA clock
     RCU_AHBEN |= (1 << 17); // GPIOA enable
     
@@ -101,17 +102,39 @@ static platform_status_t gd32_uart_init(uint32_t baudrate) {
 }
 
 static platform_status_t gd32_uart_send(const uint8_t *data, size_t len) {
+    if (!data || len == 0) {
+        return PLATFORM_ERROR;
+    }
+    
     for (size_t i = 0; i < len; i++) {
-        // Wait for transmit buffer empty
-        while (!(USART0_STAT & USART_STAT_TBE));
+        uint32_t start_time = PLATFORM_GET_TICK_MS();
+        
+        // Wait for transmit buffer empty with timeout
+        while (!(USART0_STAT & USART_STAT_TBE)) {
+            if ((PLATFORM_GET_TICK_MS() - start_time) > 100) { // 100ms timeout
+                return PLATFORM_TIMEOUT;
+            }
+        }
+        
         USART0_DATA = data[i];
     }
-    // Wait for transmission complete
-    while (!(USART0_STAT & USART_STAT_TC));
+    
+    // Wait for transmission complete with timeout
+    uint32_t start_time = PLATFORM_GET_TICK_MS();
+    while (!(USART0_STAT & USART_STAT_TC)) {
+        if ((PLATFORM_GET_TICK_MS() - start_time) > 100) { // 100ms timeout
+            return PLATFORM_TIMEOUT;
+        }
+    }
+    
     return PLATFORM_OK;
 }
 
 static platform_status_t gd32_uart_receive(uint8_t *data, size_t len, uint32_t timeout_ms) {
+    if (!data || len == 0) {
+        return PLATFORM_ERROR;
+    }
+    
     for (size_t i = 0; i < len; i++) {
         uint32_t start_time = PLATFORM_GET_TICK_MS();
         while (!(USART0_STAT & USART_STAT_RBNE)) {
@@ -130,6 +153,7 @@ static platform_status_t gd32_uart_send_string(const char *str) {
 
 /* I2C implementation */
 static platform_status_t gd32_i2c_init(uint32_t frequency) {
+    (void)frequency; // Mark as intentionally unused
     // Enable GPIOA clock
     RCU_AHBEN |= (1 << 17); // GPIOA enable
     
@@ -156,13 +180,67 @@ static platform_status_t gd32_i2c_init(uint32_t frequency) {
     return PLATFORM_OK;
 }
 
+static platform_status_t gd32_i2c_bus_reset(void) {
+    // Disable I2C peripheral
+    I2C0_CTL0 &= ~I2C_CTL0_I2CEN;
+    
+    // Configure SCL and SDA as GPIO outputs for manual reset
+    GPIOA_CTL0 &= ~(0xF << 24); // Clear PA6 (SCL)
+    GPIOA_CTL0 |= (0x1 << 24);  // Set PA6 as output
+    GPIOA_CTL0 &= ~(0xF << 28); // Clear PA7 (SDA)  
+    GPIOA_CTL0 |= (0x1 << 28);  // Set PA7 as output
+    
+    // Generate 9 clock pulses on SCL to reset stuck devices
+    for (int i = 0; i < 9; i++) {
+        GPIOA_CTL0 &= ~(1 << 24); // Set SCL low
+        PLATFORM_DELAY_US(5);
+        GPIOA_CTL0 |= (1 << 24);  // Set SCL high
+        PLATFORM_DELAY_US(5);
+    }
+    
+    // Generate STOP condition on SDA
+    GPIOA_CTL0 &= ~(1 << 28); // Set SDA low
+    PLATFORM_DELAY_US(5);
+    GPIOA_CTL0 |= (1 << 24);  // Set SCL high
+    PLATFORM_DELAY_US(5);
+    GPIOA_CTL0 |= (1 << 28);  // Set SDA high
+    PLATFORM_DELAY_US(5);
+    
+    // Reconfigure pins as I2C open-drain
+    GPIOA_CTL0 &= ~(0xF << 24); // Clear PA6
+    GPIOA_CTL0 |= (0xD << 24);  // Open-drain output, 50MHz
+    GPIOA_CTL0 &= ~(0xF << 28); // Clear PA7
+    GPIOA_CTL0 |= (0xD << 28);  // Open-drain output, 50MHz
+    
+    // Re-enable I2C peripheral
+    I2C0_CTL0 |= I2C_CTL0_I2CEN;
+    
+    return PLATFORM_OK;
+}
+
 static platform_status_t gd32_i2c_wait_for_flag(uint32_t flag, uint32_t timeout_ms) {
     uint32_t start_time = PLATFORM_GET_TICK_MS();
+    
     while (!(I2C0_STAT1 & flag)) {
+        // Check for bus errors
+        if (I2C0_STAT1 & (1 << 15)) { // Bus error flag
+            // Attempt bus recovery
+            gd32_i2c_bus_reset();
+            return PLATFORM_ERROR;
+        }
+        
         if ((PLATFORM_GET_TICK_MS() - start_time) > timeout_ms) {
+            // Clear any pending start condition on timeout
+            I2C0_CTL0 &= ~I2C_CTL0_START;
             return PLATFORM_TIMEOUT;
         }
     }
+    
+    // Clear the flag we were waiting for
+    if (flag == I2C_STAT1_ADDSEND) {
+        I2C0_STAT1 &= ~I2C_STAT1_ADDSEND;
+    }
+    
     return PLATFORM_OK;
 }
 
@@ -253,27 +331,96 @@ static platform_status_t gd32_i2c_read_reg(uint8_t addr, uint16_t reg, uint8_t *
 
 /* GPIO implementation */
 static platform_status_t gd32_gpio_init(uint32_t pin, uint32_t mode) {
-    // Simple GPIO implementation - would need expansion for real use
+    // Enable GPIOA clock
+    RCU_AHBEN |= (1 << 17); // GPIOA enable
+    
+    volatile uint32_t *gpio_ctl;
+    uint32_t pin_pos;
+    uint32_t ctl_val = 0;
+    
+    // Determine control register and pin position
+    if (pin < 8) {
+        gpio_ctl = &GPIOA_CTL0;
+        pin_pos = pin * 4;
+    } else {
+        gpio_ctl = &GPIOA_CTL1;
+        pin_pos = (pin - 8) * 4;
+    }
+    
+    // Configure based on mode
+    switch (mode) {
+        case PLATFORM_GPIO_INPUT:
+            ctl_val = 0x8; // Input with pull-up/pull-down
+            break;
+        case PLATFORM_GPIO_OUTPUT:
+            ctl_val = 0x1; // General purpose output, max speed 10MHz
+            break;
+        case PLATFORM_GPIO_ALT_FUNC:
+            ctl_val = 0x2; // Alternate function
+            break;
+        case PLATFORM_GPIO_ANALOG:
+            ctl_val = 0x0; // Analog mode
+            break;
+        default:
+            return PLATFORM_ERROR;
+    }
+    
+    // Clear and set pin configuration
+    *gpio_ctl &= ~(0xF << pin_pos);
+    *gpio_ctl |= (ctl_val << pin_pos);
+    
     return PLATFORM_OK;
 }
 
 static platform_status_t gd32_gpio_set(uint32_t pin, uint32_t state) {
+    volatile uint32_t *gpio_bop = (volatile uint32_t*)0x48000010; // GPIOA_BOP
+    volatile uint32_t *gpio_bc = (volatile uint32_t*)0x48000014;  // GPIOA_BC
+    
+    if (state) {
+        *gpio_bop = (1 << pin); // Set bit
+    } else {
+        *gpio_bc = (1 << pin);  // Clear bit
+    }
+    
     return PLATFORM_OK;
 }
 
 static platform_status_t gd32_gpio_get(uint32_t pin, uint32_t *state) {
+    volatile uint32_t gpio_istat = *((volatile uint32_t*)0x48000008); // GPIOA_ISTAT
+    
+    *state = (gpio_istat >> pin) & 0x1;
     return PLATFORM_OK;
+}
+
+/* SysTick definitions */
+#define SYSTICK_CTL     (*((volatile uint32_t*)0xE000E010))
+#define SYSTICK_LOAD    (*((volatile uint32_t*)0xE000E014))
+#define SYSTICK_VAL     (*((volatile uint32_t*)0xE000E018))
+#define SYSTICK_CALIB   (*((volatile uint32_t*)0xE000E01C))
+
+#define SYSTICK_CTL_ENABLE    (1 << 0)
+#define SYSTICK_CTL_TICKINT   (1 << 1)
+#define SYSTICK_CTL_CLKSOURCE (1 << 2)
+#define SYSTICK_CTL_COUNTFLAG (1 << 16)
+
+/* Static variables for timing */
+static volatile uint32_t systick_count = 0;
+
+/* SysTick interrupt handler - declared in startup file */
+void SysTick_Handler(void) {
+    systick_count++;
 }
 
 /* Timer/Delay implementation */
 static void gd32_delay_ms(uint32_t ms) {
-    volatile uint32_t count = ms * 48000; // Approximate for 48MHz
-    while (count--) {
+    uint32_t start_tick = systick_count;
+    while ((systick_count - start_tick) < ms) {
         __asm("nop");
     }
 }
 
 static void gd32_delay_us(uint32_t us) {
+    // For microsecond delays, use busy-wait with calibrated loops
     volatile uint32_t count = us * 48; // Approximate for 48MHz
     while (count--) {
         __asm("nop");
@@ -281,17 +428,29 @@ static void gd32_delay_us(uint32_t us) {
 }
 
 static uint32_t gd32_get_tick_ms(void) {
-    static uint32_t tick_count = 0;
-    return tick_count++; // Simple implementation - would need SysTick for real use
+    return systick_count;
 }
 
 static uint32_t gd32_get_tick_us(void) {
-    return gd32_get_tick_ms() * 1000;
+    // Combine SysTick count with current value for microsecond resolution
+    uint32_t current_val = SYSTICK_VAL;
+    uint32_t load_val = SYSTICK_LOAD;
+    
+    // Calculate remaining microseconds in current tick
+    uint32_t remaining_us = (load_val - current_val) * 1000 / load_val;
+    
+    return (systick_count * 1000) + remaining_us;
 }
 
 /* System implementation */
 static platform_status_t gd32_system_init(void) {
     gd32_system_clock_init();
+    
+    // Initialize SysTick for 1ms interrupts
+    SYSTICK_LOAD = (SYSTEM_CLOCK_HZ / 1000) - 1;  // 1ms tick
+    SYSTICK_VAL = 0;  // Clear current value
+    SYSTICK_CTL = SYSTICK_CTL_CLKSOURCE | SYSTICK_CTL_TICKINT | SYSTICK_CTL_ENABLE;
+    
     return PLATFORM_OK;
 }
 

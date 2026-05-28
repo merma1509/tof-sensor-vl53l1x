@@ -184,10 +184,9 @@ static int test_endian_utils(void) {
     return 0;
 }
 
-// Main test runner
-int main(void) {
-    debug_print("Starting common utilities test suite...\n");
-    debug_print("=====================================\n");
+// Test functions for integration with test runner
+int test_common_utilities_basic(void) {
+    debug_print("Running common utilities basic tests...\n");
     
     int result = 0;
     
@@ -197,13 +196,6 @@ int main(void) {
     if (test_debug_utils() != 0) result = -1;
     if (test_crc_utils() != 0) result = -1;
     if (test_endian_utils() != 0) result = -1;
-    
-    debug_print("=====================================\n");
-    if (result == 0) {
-        debug_print("All tests PASSED!\n");
-    } else {
-        debug_print("Some tests FAILED!\n");
-    }
     
     return result;
 }

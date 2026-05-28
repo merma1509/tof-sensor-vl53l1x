@@ -422,7 +422,6 @@ VL53L1X_ERROR VL53L1X_SetTimingBudgetInMs(uint16_t dev, uint16_t TimingBudgetInM
 
 VL53L1X_ERROR VL53L1X_GetTimingBudgetInMs(uint16_t dev, uint16_t *pTimingBudget)
 {
-	uint8_t data[2];
 	uint16_t Temp;
 	VL53L1X_ERROR status = 0;
 
@@ -524,34 +523,26 @@ VL53L1X_ERROR VL53L1X_GetDistanceMode(uint16_t dev, uint16_t *DM)
 
 VL53L1X_ERROR VL53L1X_SetInterMeasurementInMs(uint16_t dev, uint32_t InterMeasMs)
 {
-	uint8_t data[2];
 	uint16_t ClockPLL;
 	uint32_t value;
 	VL53L1X_ERROR status = 0;
 
 	status |= VL53L1_ReadWord(dev, VL53L1_RESULT__OSC_CALIBRATE_VAL, &ClockPLL);
-	ClockPLL = (data[0] << 8) | data[1];
 	ClockPLL = ClockPLL & 0x3FF;
 	value = (uint32_t)(ClockPLL * InterMeasMs * 1.075);
-	{
-		uint8_t ddata[4] = {(value >> 24) & 0xFF, (value >> 16) & 0xFF, (value >> 8) & 0xFF, value & 0xFF};
-		VL53L1_WriteDWord(dev, VL53L1_SYSTEM__INTERMEASUREMENT_PERIOD, value);
-	}
+	VL53L1_WriteDWord(dev, VL53L1_SYSTEM__INTERMEASUREMENT_PERIOD, value);
 	return status;
 }
 
 VL53L1X_ERROR VL53L1X_GetInterMeasurementInMs(uint16_t dev, uint16_t *pIM)
 {
-	uint8_t data[2], ddata[4];
 	uint16_t ClockPLL;
 	VL53L1X_ERROR status = 0;
 	uint32_t tmp;
 
 	status |= VL53L1_ReadDWord(dev, VL53L1_SYSTEM__INTERMEASUREMENT_PERIOD, &tmp);
-	tmp = (ddata[0] << 24) | (ddata[1] << 16) | (ddata[2] << 8) | ddata[3];
 	*pIM = (uint16_t)tmp;
 	status |= VL53L1_ReadWord(dev, VL53L1_RESULT__OSC_CALIBRATE_VAL, &ClockPLL);
-	ClockPLL = (data[0] << 8) | data[1];
 	ClockPLL = ClockPLL & 0x3FF;
 	*pIM = (uint16_t)(*pIM/(ClockPLL*1.065));
 	return status;
@@ -570,33 +561,26 @@ VL53L1X_ERROR VL53L1X_BootState(uint16_t dev, uint8_t *state)
 VL53L1X_ERROR VL53L1X_GetSensorId(uint16_t dev, uint16_t *sensorId)
 {
 	VL53L1X_ERROR status = 0;
-	uint8_t data[2];
 
 	status |= VL53L1_ReadWord(dev, VL53L1_IDENTIFICATION__MODEL_ID, sensorId);
-	*sensorId = (data[0] << 8) | data[1];
 	return status;
 }
 
 VL53L1X_ERROR VL53L1X_GetDistance(uint16_t dev, uint16_t *distance)
 {
 	VL53L1X_ERROR status = 0;
-	uint8_t data[2];
 
 	status |= VL53L1_ReadWord(dev, VL53L1_RESULT__FINAL_CROSSTALK_CORRECTED_RANGE_MM_SD0, distance);
-	*distance = (data[0] << 8) | data[1];
 	return status;
 }
 
 VL53L1X_ERROR VL53L1X_GetSignalPerSpad(uint16_t dev, uint16_t *signalRate)
 {
 	VL53L1X_ERROR status = 0;
-	uint8_t data1[2], data2[2];
 	uint16_t SpNb=1, signal;
 
 	status |= VL53L1_ReadWord(dev, VL53L1_RESULT__PEAK_SIGNAL_COUNT_RATE_CROSSTALK_CORRECTED_MCPS_SD0, &signal);
 	status |= VL53L1_ReadWord(dev, VL53L1_RESULT__DSS_ACTUAL_EFFECTIVE_SPADS_SD0, &SpNb);
-	signal = (data1[0] << 8) | data1[1];
-	SpNb = (data2[0] << 8) | data2[1];
 	*signalRate = (uint16_t) (200.0*signal/SpNb);
 	return status;
 }
@@ -604,13 +588,10 @@ VL53L1X_ERROR VL53L1X_GetSignalPerSpad(uint16_t dev, uint16_t *signalRate)
 VL53L1X_ERROR VL53L1X_GetAmbientPerSpad(uint16_t dev, uint16_t *ambPerSp)
 {
 	VL53L1X_ERROR status = 0;
-	uint8_t data1[2], data2[2];
 	uint16_t AmbientRate, SpNb = 1;
 
 	status |= VL53L1_ReadWord(dev, RESULT__AMBIENT_COUNT_RATE_MCPS_SD, &AmbientRate);
 	status |= VL53L1_ReadWord(dev, VL53L1_RESULT__DSS_ACTUAL_EFFECTIVE_SPADS_SD0, &SpNb);
-	AmbientRate = (data1[0] << 8) | data1[1];
-	SpNb = (data2[0] << 8) | data2[1];
 	*ambPerSp = (uint16_t) (200.0 * AmbientRate / SpNb);
 	return status;
 }
@@ -618,30 +599,27 @@ VL53L1X_ERROR VL53L1X_GetAmbientPerSpad(uint16_t dev, uint16_t *ambPerSp)
 VL53L1X_ERROR VL53L1X_GetSignalRate(uint16_t dev, uint16_t *signal)
 {
 	VL53L1X_ERROR status = 0;
-	uint8_t data[2];
 
 	status |= VL53L1_ReadWord(dev, VL53L1_RESULT__PEAK_SIGNAL_COUNT_RATE_CROSSTALK_CORRECTED_MCPS_SD0, signal);
-	*signal = ((data[0] << 8) | data[1]) * 8;
+	*signal = *signal * 8;
 	return status;
 }
 
 VL53L1X_ERROR VL53L1X_GetSpadNb(uint16_t dev, uint16_t *spNb)
 {
 	VL53L1X_ERROR status = 0;
-	uint8_t data[2];
 
 	status |= VL53L1_ReadWord(dev, VL53L1_RESULT__DSS_ACTUAL_EFFECTIVE_SPADS_SD0, spNb);
-	*spNb = ((data[0] << 8) | data[1]) >> 8;
+	*spNb = *spNb >> 8;
 	return status;
 }
 
 VL53L1X_ERROR VL53L1X_GetAmbientRate(uint16_t dev, uint16_t *ambRate)
 {
 	VL53L1X_ERROR status = 0;
-	uint8_t data[2];
 
 	status |= VL53L1_ReadWord(dev, RESULT__AMBIENT_COUNT_RATE_MCPS_SD, ambRate);
-	*ambRate = ((data[0] << 8) | data[1]) * 8;
+	*ambRate = *ambRate * 8;
 	return status;
 }
 
@@ -660,11 +638,12 @@ VL53L1X_ERROR VL53L1X_GetRangeStatus(uint16_t dev, uint8_t *rangeStatus)
 
 VL53L1X_ERROR VL53L1X_GetResult(uint16_t dev, VL53L1X_Result_t *pResult)
 {
+	(void)dev; // Mark as intentionally unused
 	VL53L1X_ERROR status = 0;
 	uint8_t Temp[17];
 	uint8_t RgSt = 255;
 
-	status |= VL53L1_ReadMulti(0x52, VL53L1_RESULT__RANGE_STATUS, Temp, 17);
+	status |= VL53L1_ReadMulti(dev, VL53L1_RESULT__RANGE_STATUS, Temp, 17);
 	RgSt = Temp[0] & 0x1F;
 	if (RgSt < 24)
 		RgSt = status_rtn[RgSt];
@@ -701,7 +680,6 @@ VL53L1X_ERROR VL53L1X_SetOffset(uint16_t dev, int16_t OffsetValue)
 VL53L1X_ERROR  VL53L1X_GetOffset(uint16_t dev, int16_t *offset)
 {
 	VL53L1X_ERROR status = 0;
-	uint8_t data[2];
 	uint16_t Temp;
 
 	status |= VL53L1_ReadWord(dev, ALGO__PART_TO_PART_RANGE_OFFSET_MM, &Temp);
@@ -741,10 +719,9 @@ VL53L1X_ERROR VL53L1X_SetXtalk(uint16_t dev, uint16_t XtalkValue)
 VL53L1X_ERROR VL53L1X_GetXtalk(uint16_t dev, uint16_t *xtalk )
 {
 	VL53L1X_ERROR status = 0;
-	uint8_t data[2];
 
 	status |= VL53L1_ReadWord(dev, ALGO__CROSSTALK_COMPENSATION_PLANE_OFFSET_KCPS, xtalk);
-	*xtalk = (uint16_t)((((data[0] << 8) | data[1])*1000)>>9); /* * 1000 to convert kcps to cps and >> 9 (7.9 format) */
+	*xtalk = (uint16_t)(((*xtalk)*1000)>>9); /* * 1000 to convert kcps to cps and >> 9 (7.9 format) */
 	return status;
 }
 
@@ -786,20 +763,16 @@ VL53L1X_ERROR VL53L1X_GetDistanceThresholdWindow(uint16_t dev, uint16_t *window)
 VL53L1X_ERROR VL53L1X_GetDistanceThresholdLow(uint16_t dev, uint16_t *low)
 {
 	VL53L1X_ERROR status = 0;
-	uint8_t data[2];
 
 	status |= VL53L1_ReadWord(dev, SYSTEM__THRESH_LOW, low);
-	*low = (data[0] << 8) | data[1];
 	return status;
 }
 
 VL53L1X_ERROR VL53L1X_GetDistanceThresholdHigh(uint16_t dev, uint16_t *high)
 {
 	VL53L1X_ERROR status = 0;
-	uint8_t data[2];
 
 	status |= VL53L1_ReadWord(dev, SYSTEM__THRESH_HIGH, high);
-	*high = (data[0] << 8) | data[1];
 	return status;
 }
 
@@ -862,10 +835,9 @@ VL53L1X_ERROR VL53L1X_SetSignalThreshold(uint16_t dev, uint16_t Signal)
 VL53L1X_ERROR VL53L1X_GetSignalThreshold(uint16_t dev, uint16_t *signal)
 {
 	VL53L1X_ERROR status = 0;
-	uint8_t data[2];
 
 	status |= VL53L1_ReadWord(dev, RANGE_CONFIG__MIN_COUNT_RATE_RTN_LIMIT_MCPS, signal);
-	*signal = ((data[0] << 8) | data[1]) << 3;
+	*signal = *signal << 3;
 	return status;
 }
 
@@ -887,10 +859,9 @@ VL53L1X_ERROR VL53L1X_SetSigmaThreshold(uint16_t dev, uint16_t Sigma)
 VL53L1X_ERROR VL53L1X_GetSigmaThreshold(uint16_t dev, uint16_t *sigma)
 {
 	VL53L1X_ERROR status = 0;
-	uint8_t data[2];
 
 	status |= VL53L1_ReadWord(dev, RANGE_CONFIG__SIGMA_THRESH, sigma);
-	*sigma = ((data[0] << 8) | data[1]) >> 2;
+	*sigma = *sigma >> 2;
 	return status;
 }
 

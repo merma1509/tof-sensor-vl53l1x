@@ -6,14 +6,6 @@
 #include "vl53l1_platform.h"
 #include "../../platform/platform.h"
 
-// Minimal snprintf implementation for bare-metal environment
-static int snprintf(char *str, size_t size, const char *format, ...) {
-    // Very minimal implementation - only supports %s, %d, %u, %X
-    // For production use, this should be expanded or use a proper library
-    (void)format; // Suppress unused parameter warning
-    str[0] = '\0';
-    return 0;
-}
 
 /* VL53L1 platform I2C implementations */
 int VL53L1_WriteMulti(uint16_t dev, uint16_t index, uint8_t *pdata, uint32_t count) {

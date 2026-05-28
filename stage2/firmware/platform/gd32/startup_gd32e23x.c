@@ -90,7 +90,7 @@ void UsageFault_Handler(void) __attribute__((weak, alias("Default_Handler")));
 void SVC_Handler(void) __attribute__((weak, alias("Default_Handler")));
 void DebugMon_Handler(void) __attribute__((weak, alias("Default_Handler")));
 void PendSV_Handler(void) __attribute__((weak, alias("Default_Handler")));
-void SysTick_Handler(void) __attribute__((weak, alias("Default_Handler")));
+// Note: SysTick_Handler is implemented in platform_gd32.c for accurate timing
 
 // Minimal SystemInit
 void SystemInit(void) {

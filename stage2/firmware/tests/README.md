@@ -91,30 +91,30 @@ The tests use a simple custom test framework with these macros:
 ## Test Coverage
 
 ### Common Utilities Coverage
-- ✅ String manipulation functions
-- ✅ Memory operations
-- ✅ Mathematical conversions
-- ✅ Timing functions
-- ✅ Debug output
-- ✅ CRC calculations
-- ✅ Endian conversions
+- String manipulation functions
+- Memory operations
+- Mathematical conversions
+- Timing functions
+- Debug output
+- CRC calculations
+- Endian conversions
 
 ### TOF Service Coverage
-- ✅ Service lifecycle (init/deinit)
-- ✅ Mode management
-- ✅ Ranging operations
-- ✅ Distance measurement
-- ✅ Filter operations
-- ✅ Status reporting
-- ⚠️ Sensor-specific functionality (requires actual hardware)
+- Service lifecycle (init/deinit)
+- Mode management
+- Ranging operations
+- Distance measurement
+- Filter operations
+- Status reporting
+- WARNING: Sensor-specific functionality (requires actual hardware)
 
 ### Platform Coverage
-- ✅ Platform initialization
-- ✅ UART communication
-- ✅ I2C communication
-- ✅ GPIO operations
-- ✅ Timing functions
-- ⚠️ Hardware-specific features (requires actual hardware)
+- Platform initialization
+- UART communication
+- I2C communication
+- GPIO operations
+- Timing functions
+- WARNING: Hardware-specific features (requires actual hardware)
 
 ## Adding New Tests
 

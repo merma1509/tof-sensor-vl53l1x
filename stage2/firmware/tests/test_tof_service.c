@@ -140,10 +140,9 @@ static int test_tof_service_measurement(void) {
     return 0;
 }
 
-// Main test runner
-int main(void) {
-    debug_print("Starting TOF service test suite...\n");
-    debug_print("=====================================\n");
+// Test functions for integration with test runner
+int test_tof_service_basic(void) {
+    debug_print("Running TOF service basic tests...\n");
     
     int result = 0;
     
@@ -155,13 +154,6 @@ int main(void) {
     
     // Cleanup
     tof_service_deinit();
-    
-    debug_print("=====================================\n");
-    if (result == 0) {
-        debug_print("All TOF service tests PASSED!\n");
-    } else {
-        debug_print("Some TOF service tests FAILED!\n");
-    }
     
     return result;
 }

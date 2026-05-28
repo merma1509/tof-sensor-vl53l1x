@@ -20,6 +20,12 @@ typedef enum {
     PLATFORM_NOT_SUPPORTED = -4
 } platform_status_t;
 
+/* GPIO mode constants */
+#define PLATFORM_GPIO_INPUT      0
+#define PLATFORM_GPIO_OUTPUT     1
+#define PLATFORM_GPIO_ALT_FUNC   2
+#define PLATFORM_GPIO_ANALOG     3
+
 /* Platform interface structure */
 typedef struct {
     /* UART interface */

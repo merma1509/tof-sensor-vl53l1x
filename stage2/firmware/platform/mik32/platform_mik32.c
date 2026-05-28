@@ -104,6 +104,7 @@ static void mik32_system_clock_init(void) {
 
 /* UART implementation */
 static platform_status_t mik32_uart_init(uint32_t baudrate) {
+    (void)baudrate; // Mark as intentionally unused
     // Enable UART clock
     PM_CLK_APB_P_SET = PM_CLOCK_UART_0;
     
@@ -138,16 +139,14 @@ static platform_status_t mik32_uart_send(const uint8_t *data, size_t len) {
 
 static platform_status_t mik32_uart_receive(uint8_t *data, size_t len, uint32_t timeout_ms) {
     for (size_t i = 0; i < len; i++) {
-        uint32_t timeout_count = timeout_ms * 1000; // Approximate timeout
+        uint32_t start_time = PLATFORM_GET_TICK_MS();
         
-        // Wait for RX data to be ready
-        while (!(UART_0_STATUS & UART_STATUS_RX_READY) && timeout_count) {
-            timeout_count--;
-            mik32_delay_us(1);
-        }
-        
-        if (!timeout_count) {
-            return PLATFORM_TIMEOUT;
+        // Wait for RX data to be ready with precise timeout
+        while (!(UART_0_STATUS & UART_STATUS_RX_READY)) {
+            if ((PLATFORM_GET_TICK_MS() - start_time) > timeout_ms) {
+                return PLATFORM_TIMEOUT;
+            }
+            mik32_delay_us(1); // Small delay to prevent busy-wait
         }
         
         // Read data
@@ -164,6 +163,7 @@ static platform_status_t mik32_uart_send_string(const char *str) {
 
 /* I2C implementation */
 static platform_status_t mik32_i2c_init(uint32_t frequency) {
+    (void)frequency; // Mark as intentionally unused
     // Enable I2C clock
     PM_CLK_APB_P_SET = PM_CLOCK_I2C_0;
     

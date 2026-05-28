@@ -8,12 +8,6 @@
 #include "tof_service.h"
 #include "command_parser.h"
 
-// Minimal snprintf for bare-metal environment
-static int snprintf(char *str, size_t size, const char *format, ...) {
-    (void)format; // Suppress unused parameter warning
-    str[0] = '\0';
-    return 0;
-}
 
 /* Application state */
 static uint8_t app_running = 1;
