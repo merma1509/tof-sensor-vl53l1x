@@ -34,3 +34,14 @@ tests/
 
 # Firmware libraries
 /GD32E23Firmware/CMSIS/cmsis_compiler_original.h
+
+# Toolchain directories (large binary files)
+stage2/firmware/arm-gnu-toolchain-*/
+stage2/firmware/mik32-toolchain-*/
+**/toolchain/
+*.exe
+*.dll
+*.a
+*.lib
+*.so
+*.dylib
