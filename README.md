@@ -1,4 +1,4 @@
-# Clear Space VL53L1X Firmware
+# VL53L1X Firmware
 
 ## Overview
 Multi-stage embedded firmware project for VL53L1X Time-of-Flight (ToF) sensor supporting both GD32E230 and MIK32 microcontrollers. Provides complete distance measurement capabilities with I2C communication and UART command interface.
